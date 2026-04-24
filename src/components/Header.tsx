@@ -8,9 +8,9 @@ export function Header() {
           <span className="text-lg">AIOcean</span>
         </div>
         <nav className="flex items-center gap-4 text-sm font-medium">
-          <a href="#" className="text-foreground/80 hover:text-foreground transition-colors">Browse</a>
-          <a href="#" className="text-foreground/80 hover:text-foreground transition-colors">Submit Tool</a>
-          <Button variant="outline" size="sm" className="hidden md:inline-flex">Sign In</Button>
+          <a href="#" className="text-foreground/80 hover:text-primary transition-colors">Browse</a>
+          <a href="#" className="text-foreground/80 hover:text-primary  transition-colors">Submit Tool</a>
+          <Button  size="sm" className="hidden md:inline-flex">Sign In</Button>
         </nav>
       </div>
     </header>

@@ -1,5 +1,5 @@
 import {
-  ElementType,
+  type ElementType,
   forwardRef,
   useCallback,
   useEffect,
@@ -9,10 +9,10 @@ import {
 } from "react"
 import {
   AnimatePresence,
-  AnimatePresenceProps,
+  type AnimatePresenceProps,
   motion,
-  MotionProps,
-  Transition,
+  type MotionProps,
+  type Transition,
 } from "motion/react"
 
 import { cn } from "@/lib/utils"
@@ -380,9 +380,9 @@ const TextRotate = forwardRef<TextRotateRef, TextRotateProps>(
             {(splitBy === "characters"
               ? (elements as WordObject[])
               : (elements as string[]).map((el, i) => ({
-                  characters: [el],
-                  needsSpace: i !== elements.length - 1,
-                }))
+                characters: [el],
+                needsSpace: i !== elements.length - 1,
+              }))
             ).map((wordObj, wordIndex, array) => {
               const previousCharsCount = array
                 .slice(0, wordIndex)
@@ -397,9 +397,9 @@ const TextRotate = forwardRef<TextRotateRef, TextRotateProps>(
                     const totalIndex = previousCharsCount + charIndex
                     const animationProps = getAnimationProps(totalIndex)
                     return (
-                      <span 
-                      key={totalIndex}
-                      className={cn(elementLevelClassName)}
+                      <span
+                        key={totalIndex}
+                        className={cn(elementLevelClassName)}
                       >
                         <motion.span
                           {...animationProps}

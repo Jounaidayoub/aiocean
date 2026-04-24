@@ -6,7 +6,8 @@ import { Input } from "./components/ui/input"
 import { Button } from "./components/ui/button"
 import { Badge } from "./components/ui/badge"
 import { Search, ChevronDown, X } from "lucide-react"
-import LineWaves from "./components/LineWaves"
+import TextRotate from "./components/fancy/text/text-rotate"
+import { LayoutGroup, motion } from "motion/react"
 
 const MOCK_TOOLS: Tool[] = [
   { id: "1", name: "WritePro", logo: "✍️", tagline: "AI powered writing assistant", category: "Writing", pricing: "Freemium", platform: "Web", usageCount: 15400, rating: 4.8, primaryUseCase: "Writing emails" },
@@ -44,26 +45,45 @@ export function App() {
 
       <main className="flex-1 flex flex-col items-center">
         {/* Hero Section */}
-        <section className="relative w-full px-2 py-20 md:py-20 flex flex-col items-center text-center z-10">
-          <Badge variant="outline" className="mb-6 px-4 py-1.5 rounded-full border-primary/30 bg-primary/5 text-primary text-sm font-medium">
-            Explore 1,000+ top AI apps
-          </Badge>
+        <section className="relative z-10 flex w-full flex-col max-w-6xl items-center px-2 py-12 text-center md:py-24">
+          <LayoutGroup>
+            <Badge variant={"outline"} className="border-primary  text-foreground">
+              Explore 1,000+ top AI apps 
+            </Badge>
+          
+            <motion.h1 layout className="mb-6 flex max-w-4xl flex-wrap items-center justify-center gap-x-3 gap-y-2 text-4xl font-extrabold leading-tight tracking-tight md:text-7xl">
+              <motion.span layout transition={{ type: "spring", damping: 30, stiffness: 400 }}>
+                Supercharge your workflow 
+              </motion.span>
+              <motion.span layout className="whitespace-nowrap">
+                with
+              </motion.span>
+              <TextRotate
+                texts={["AI tools", "Coding agents", "Smart assistants", "Creative tools", "Productivity apps"]}
+                as="span"
+                mainClassName="[box-shadow:inset_0_3.4px_1px_rgba(255,255,255,0.5)] border-primary inline-flex justify-center rounded-lg bg-primary px-2 py-0.5 font-serif text-white sm:px-2 sm:py-1 md:px-3 md:py-1"
+                staggerFrom={"last"}
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "-120%" }}
+                staggerDuration={0.025}
+                splitLevelClassName="overflow-hidden pb-0.5 sm:pb-1 md:pb-1"
+                transition={{ type: "spring", damping: 30, stiffness: 400 }}
+                rotationInterval={4000}
+              />
+            </motion.h1>
+          </LayoutGroup>
 
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 max-w-4xl leading-tight">
-            Supercharge your work<br className="hidden md:block" /> with <span className="text-primary font-serif bg-clip-text">AI tools</span>
-          </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-3xl font-light leading-relaxed">
+          <p className="mb-12  max-w-3xl text-xl font-light leading-relaxed text-muted-foreground md:text-2xl">
             Find the perfect applications curated by the community to boost your productivity, creativity, and workflow.
           </p>
 
-
-
           <div className="relative w-full max-w-2xl">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground size-5" />
+            <Search className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-primary " />
             <Input
               type="text"
               placeholder="Search tools, workflows, or use cases..."
-              className="w-full pl-12 pr-4 h-14 text-lg rounded-2xl shadow-sm border-muted-foreground/20 focus-visible:ring-primary/40 "
+              className="h-14 w-full rounded-2xl border-muted-foreground/20 pl-12 pr-4 text-lg shadow-sm focus-visible:ring-primary/40"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />

@@ -7,7 +7,7 @@ export interface Tool {
   name: string
   logo: string
   tagline: string
-  category: "Writing" | "Image Generation" | "Productivity" | "Coding" | "Research" | "Audio" | string
+  category: "Writing" | "Image Generation" | "Productivity" | "Coding" | "Research" | "Audio" | string 
   pricing: "Free" | "Freemium" | "Paid" | string
   platform: "Web" | "Mobile" | "API" | "Browser Extension" | string
   usageCount: number
