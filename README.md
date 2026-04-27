@@ -1,21 +1,23 @@
-# React + TypeScript + Vite + shadcn/ui
+# AIOcean Monorepo
 
-This is a template for a new Vite project with React, TypeScript, and shadcn/ui.
+This repository is organized as a monorepo with workspace packages.
 
-## Adding components
+## Packages
 
-To add components to your app, run the following command:
+- `packages/web`: React + TypeScript frontend
+- `packages/api`: PHP backend API
+
+## Root Scripts
 
 ```bash
-npx shadcn@latest add button
+pnpm dev      # runs web dev server
+pnpm dev:web  # runs web dev server
+pnpm dev:api  # runs php api server
+pnpm build    # builds web app
 ```
 
-This will place the ui components in the `src/components` directory.
+## Backend Onboarding
 
-## Using components
+For backend architecture and step-by-step feature development guidance, read:
 
-To use the components in your app, import them as follows:
-
-```tsx
-import { Button } from "@/components/ui/button"
-```
+- `docs/backend-feature-guide.md`

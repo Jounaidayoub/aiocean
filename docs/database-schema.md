@@ -24,7 +24,7 @@ erDiagram
 
     MODEL {
         %% NOTE : models have names and versions like gpt-5-2026-09, but here display name and the model full name  with , but again should user reasearching for gpt 5 have all hte version should up , or onw with variants
-        uuid id PK`
+        uuid id PK
         string name
         boolean is_open_source
         string description
