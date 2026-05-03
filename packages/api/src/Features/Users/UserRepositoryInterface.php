@@ -6,4 +6,6 @@ namespace App\Features\Users;
 
 interface UserRepositoryInterface
 {
+    public function findByEmail(string $email): ?User;
+    public function findById(string $id): ?User;
 }
