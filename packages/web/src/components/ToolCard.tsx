@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Star } from "lucide-react"
+import { Link } from "react-router-dom"
 
 export interface Tool {
   id: string
@@ -53,10 +54,11 @@ export function ToolCard({ tool }: ToolCardProps) {
   }
 
   return (
-    <Card className="flex h-full cursor-pointer flex-col overflow-hidden transition-shadow hover:shadow-md">
-      <CardHeader className="pb-4">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-4">
+    <Link to={`/tools/${tool.id}`} className="block h-full transition-transform hover:-translate-y-1">
+      <Card className="flex h-full cursor-pointer flex-col overflow-hidden transition-shadow hover:shadow-md">
+        <CardHeader className="pb-4">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-4">
             <div className="flex size-12 items-center justify-center rounded-lg border bg-muted text-2xl shadow-sm">
               {tool.logo}
             </div>
@@ -95,6 +97,6 @@ export function ToolCard({ tool }: ToolCardProps) {
           </div>
         </div>
       </CardContent>
-    </Card>
-  )
+      </Card>
+    </Link>)
 }
