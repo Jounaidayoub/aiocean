@@ -6,10 +6,16 @@ namespace App\Core;
 
 use App\Core\Middleware\Pipeline;
 use App\Core\Middleware\CorsMiddleware;
+use App\Core\Middleware\SessionMiddleware;
 use App\Core\Middleware\JsonBodyParser;
 use App\Features\Tools\ToolController;
 use App\Features\Tools\ToolRepository;
 use App\Features\Tools\ToolService;
+
+use App\Features\Users\UserController;
+use App\Features\Users\UserRepository;
+use App\Features\Users\UserService;
+use PDO;
 
 /**
  * Application kernel.
@@ -41,6 +47,7 @@ final class Application
 
         $corsOrigin = $this->config['cors_origin'] ?? '*';
         $this->pipeline->pipe(new CorsMiddleware($corsOrigin));
+        $this->pipeline->pipe(new SessionMiddleware());
         $this->pipeline->pipe(new JsonBodyParser());
     }
 
@@ -63,7 +70,16 @@ final class Application
         $toolRepo    = new ToolRepository();
         $toolService = new ToolService($toolRepo);
 
+        $pdo = new PDO(
+            $this->config['db']['driver'] . ':' . $this->config['db']['path']
+        );
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        $userRepo = new UserRepository($pdo);
+        $userService = new UserService($userRepo);
+
         $this->controllers[ToolController::class] = new ToolController($toolService);
+        $this->controllers[UserController::class] = new UserController($userService);
     }
 
     /**
