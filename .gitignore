@@ -28,3 +28,8 @@ packages/api/.env
 *.njsproj
 *.sln
 *.sw?
+
+# Ignore large untracked/auto-generated files
+models.json
+*.sqlite
+database.sqlite

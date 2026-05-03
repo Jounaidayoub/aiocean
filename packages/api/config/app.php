@@ -29,10 +29,7 @@ return [
     'cors_origin' => $_ENV['CORS_ORIGIN'] ?? 'http://localhost:5173',
 
     'db' => [
-        'host' => $_ENV['DB_HOST'] ?? '127.0.0.1',
-        'port' => $_ENV['DB_PORT'] ?? '3306',
-        'name' => $_ENV['DB_NAME'] ?? 'aiocean',
-        'user' => $_ENV['DB_USER'] ?? 'root',
-        'pass' => $_ENV['DB_PASS'] ?? '',
+        'driver' => $_ENV['DB_DRIVER'] ?? 'sqlite',
+        'path'   => $_ENV['DB_PATH'] ?? dirname(__DIR__) . '/database.sqlite',
     ],
 ];
