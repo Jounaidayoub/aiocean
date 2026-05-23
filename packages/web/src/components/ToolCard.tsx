@@ -8,26 +8,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Star } from "lucide-react"
 import { Link } from "react-router-dom"
-
-export interface Tool {
-  id: string
-  name: string
-  logo: string
-  tagline: string
-  category:
-    | "Writing"
-    | "Image Generation"
-    | "Productivity"
-    | "Coding"
-    | "Research"
-    | "Audio"
-    | string
-  pricing: "Free" | "Freemium" | "Paid" | string
-  platform: "Web" | "Mobile" | "API" | "Browser Extension" | string
-  usageCount: number
-  rating: number
-  primaryUseCase: string
-}
+import type { Tool } from "../shared/schema"
 
 interface ToolCardProps {
   tool: Tool
