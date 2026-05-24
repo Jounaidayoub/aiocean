@@ -33,3 +33,6 @@ packages/api/.env
 models.json
 *.sqlite
 database.sqlite
+
+# Seeded data cache (regenerated on demand)
+packages/api/seeds/api.json
