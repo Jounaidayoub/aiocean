@@ -16,6 +16,10 @@ pnpm dev:api  # runs php api server
 pnpm build    # builds web app
 ```
 
+## Tasks & Sprint
+
+Current sprint tasks and conventions: **`TASKS.md`**
+
 ## Backend Onboarding
 
 For backend architecture and step-by-step feature development guidance, read:

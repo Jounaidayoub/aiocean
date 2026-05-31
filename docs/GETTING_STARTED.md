@@ -18,18 +18,25 @@ sudo apt install php-sqlite3
 ## Setup and Running the Project
 
 1. **Install Dependencies**
-   Make sure to install the Node.js dependencies using `pnpm`:
+   Install both Node.js and PHP dependencies:
    ```bash
    pnpm install
+   cd packages/api && composer install && cd ../..
    ```
 
-2. **Run the Database Seed**
-   Before running the API, you need to seed the database with initial data:
+2. **Run Database Migrations**
+   Create all database tables:
    ```bash
-   php packages/api/bin/seed.php
+   pnpm migrate
    ```
 
-3. **Start the Development Servers**
+3. **Seed the Database**
+   Populate with initial data (test user, tools, categories, etc.):
+   ```bash
+   pnpm db:seed
+   ```
+
+4. **Start the Development Servers**
    Open two terminal windows/tabs to run the frontend and API simultaneously.
 
    In the first terminal, start the API:
@@ -43,3 +50,25 @@ sudo apt install php-sqlite3
    ```
 
 You are now ready to start developing!
+
+## Database Migrations
+
+This project uses **Phinx** for database migrations. All migration files live in `packages/api/migrations/`.
+
+```bash
+# Run pending migrations
+pnpm migrate
+
+# Rollback the last migration
+pnpm rollback
+```
+
+When you add a new feature that needs a database change:
+
+```bash
+cd packages/api
+php vendor/bin/phinx create YourMigrationName
+# Edit the generated file in packages/api/migrations/
+cd ../..
+pnpm migrate
+```

@@ -30,7 +30,7 @@ final class ToolController extends BaseController
         $result = $this->service->list($search, $category);
 
 
-        return $this->json($result);
+        return $this->data($result);
     }
 
     public function show(Request $request): Response
@@ -43,11 +43,11 @@ final class ToolController extends BaseController
             return $this->notFound("Tool with id '$id' not found");
         }
 
-        return $this->json($tool);
+        return $this->data($tool);
     }
 
     public function categories(Request $request): Response
     {
-        return $this->json($this->service->categories());
+        return $this->data(['categories' => $this->service->categories()]);
     }
 }

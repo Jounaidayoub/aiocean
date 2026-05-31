@@ -16,6 +16,8 @@ interface ToolRepositoryInterface
 
     public function findById(string $id): ?Tool;
 
+    public function exists(string $id): bool;
+
     /** @return Tool[] */
     public function findByCategory(string $category): array;
 

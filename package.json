@@ -3,11 +3,16 @@
   "private": true,
   "version": "0.0.1",
   "scripts": {
-        "dev": "concurrently \"pnpm dev:web\" \"pnpm dev:api\"",
+        "dev": "concurrently \"pnpm dev:web\" \"pnpm dev:api\" \"pnpm dev:agent\"",
 
     "dev:web": "pnpm --filter @aiocean/web dev",
     "dev:api": "cd packages/api && composer dev",
-    "build": "pnpm --filter @aiocean/web build"
+    "migrate": "cd packages/api && composer migrate",
+    "rollback": "cd packages/api && composer rollback",
+    "db:seed": "cd packages/api && php bin/seed.php",
+    "build": "pnpm --filter @aiocean/web build",
+    "monitor": "bash scripts/agent-monitor.sh",
+    "dev:agent": "pnpm --filter @aiocean/agent dev"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"

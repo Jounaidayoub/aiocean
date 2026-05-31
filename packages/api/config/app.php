@@ -9,19 +9,8 @@ declare(strict_types=1);
  */
 
 // Load .env if it exists
-$envFile = dirname(__DIR__) . '/.env';
-if (file_exists($envFile)) {
-    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        if (str_starts_with(trim($line), '#')) {
-            continue;
-        }
-        if (str_contains($line, '=')) {
-            [$key, $value] = explode('=', $line, 2);
-            $_ENV[trim($key)] = trim($value);
-        }
-    }
-}
+$dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__));
+$dotenv->safeLoad();
 
 return [
     'env'         => $_ENV['APP_ENV']     ?? 'development',
@@ -29,7 +18,14 @@ return [
     'cors_origin' => $_ENV['CORS_ORIGIN'] ?? 'http://localhost:5173',
 
     'db' => [
-        'driver' => $_ENV['DB_DRIVER'] ?? 'sqlite',
-        'path'   => $_ENV['DB_PATH'] ?? dirname(__DIR__) . '/database.sqlite',
+        'driver' => ($_ENV['DB_DRIVER'] ?? '') ?: 'sqlite',
+        'path'   => ($_ENV['DB_PATH'] ?? '') ?: dirname(__DIR__) . '/database.sqlite',
     ],
+
+    'email' => [
+        'api_key' => $_ENV['RESEND_API_KEY'] ?? '',
+        'from'    => $_ENV['RESEND_FROM']    ?? 'AI Ocean <noreply@aiocean.dev>',
+    ],
+
+    'agent_webhook_url' => $_ENV['AGENT_WEBHOOK_URL'] ?? 'http://localhost:3001/api/agent/review',
 ];
