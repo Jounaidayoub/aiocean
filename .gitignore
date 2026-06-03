@@ -36,3 +36,6 @@ database.sqlite
 
 # Seeded data cache (regenerated on demand)
 packages/api/seeds/api.json
+
+# OAuth runtime token state
+packages/api/storage/oauth/*.json

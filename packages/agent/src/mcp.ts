@@ -1,7 +1,109 @@
-import { McpServer, WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/server';
-import { createMcpHonoApp } from '@modelcontextprotocol/hono';
+import { createVerify } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
+import { ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
+import type { ServerNotification, ServerRequest, Tool } from '@modelcontextprotocol/sdk/types.js';
+import { Hono } from 'hono';
 import { z } from 'zod';
 import { decideSubmission, getAioceanTool, listAioceanCategories, listAioceanTools, listSubmissions } from './php-client.js';
+
+type McpRequestExtra = RequestHandlerExtra<ServerRequest, ServerNotification>;
+
+type JwtClaims = {
+  sub?: string;
+  aud?: string | string[];
+  exp?: number;
+  scopes?: string[];
+  scope?: string;
+};
+
+type AuthContext = {
+  token: string;
+  userId?: string;
+  clientId: string;
+  scopes: string[];
+  expiresAt?: number;
+};
+
+const PHP_BASE = process.env.PHP_API_BASE_URL || 'http://localhost:8080';
+const OAUTH_METADATA_URL = `${PHP_BASE}/.well-known/oauth-authorization-server`;
+const MCP_OAUTH_PUBLIC_KEY_PATH = process.env.MCP_OAUTH_PUBLIC_KEY_PATH || '../api/storage/oauth/public.key';
+const ADMIN_TOOLS = new Set(['list_submissions', 'decide_submission']);
+
+function base64UrlDecode(value: string): Buffer {
+  const padded = value.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(value.length / 4) * 4, '=');
+  return Buffer.from(padded, 'base64');
+}
+
+function verifyBearerToken(token: string): AuthContext | null {
+  try {
+    return parseAndVerifyBearerToken(token);
+  } catch {
+    return null;
+  }
+}
+
+function parseAndVerifyBearerToken(token: string): AuthContext | null {
+  const [encodedHeader, encodedPayload, encodedSignature] = token.split('.');
+  if (!encodedHeader || !encodedPayload || !encodedSignature) {
+    return null;
+  }
+
+  const header = JSON.parse(base64UrlDecode(encodedHeader).toString('utf8')) as { alg?: string };
+  if (header.alg !== 'RS256') {
+    return null;
+  }
+
+  const verifier = createVerify('RSA-SHA256');
+  verifier.update(`${encodedHeader}.${encodedPayload}`);
+  verifier.end();
+
+  if (!verifier.verify(readFileSync(MCP_OAUTH_PUBLIC_KEY_PATH), base64UrlDecode(encodedSignature))) {
+    return null;
+  }
+
+  const claims = JSON.parse(base64UrlDecode(encodedPayload).toString('utf8')) as JwtClaims;
+  const now = Math.floor(Date.now() / 1000);
+  if (typeof claims.exp !== 'number' || claims.exp <= now) {
+    return null;
+  }
+
+  const scopes = Array.isArray(claims.scopes)
+    ? claims.scopes
+    : typeof claims.scope === 'string'
+      ? claims.scope.split(/\s+/).filter(Boolean)
+      : [];
+
+  const aud = Array.isArray(claims.aud) ? claims.aud[0] : claims.aud;
+  if (!aud || !scopes.includes('mcp:user')) {
+    return null;
+  }
+
+  return {
+    token,
+    userId: claims.sub,
+    clientId: aud,
+    scopes,
+    expiresAt: claims.exp,
+  };
+}
+
+function scopesFromExtra(extra: McpRequestExtra): string[] {
+  return extra.authInfo?.scopes ?? [];
+}
+
+function requireAdmin(extra: McpRequestExtra) {
+  if (!scopesFromExtra(extra).includes('mcp:admin')) {
+    return {
+      content: [{ type: 'text' as const, text: 'Forbidden: this MCP tool requires the mcp:admin scope.' }],
+      isError: true,
+    };
+  }
+
+  return null;
+}
 
 const server = new McpServer(
   { name: 'aiocean-agent', version: '1.0.0' },
@@ -10,6 +112,8 @@ const server = new McpServer(
       'Use search_ai_ocean_tools to discover AI tools in the AI Ocean directory, then get_ai_ocean_tool for full details. Use list_submissions to view pending tool submissions, and decide_submission to approve or reject them. Use list_agent_review_tools to inspect the internal review-agent tools.',
   },
 );
+
+const mcpServer = server as unknown as { registerTool: (...args: unknown[]) => unknown; registerResource: (...args: unknown[]) => unknown };
 
 const toolSchema = z.object({
   id: z.string(),
@@ -59,7 +163,7 @@ function textAndStructured<T extends Record<string, unknown>>(structuredContent:
   };
 }
 
-server.registerTool(
+mcpServer.registerTool(
   'search_ai_ocean_tools',
   {
     title: 'Search AI Ocean Tools',
@@ -80,7 +184,7 @@ server.registerTool(
       openWorldHint: false,
     },
   },
-  async ({ query, category, limit }) => {
+  async ({ query, category, limit }: { query?: string; category?: string; limit: number }) => {
     const result = await listAioceanTools({ search: query, category });
     if (!result) {
       return {
@@ -99,7 +203,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+mcpServer.registerTool(
   'get_ai_ocean_tool',
   {
     title: 'Get AI Ocean Tool',
@@ -114,7 +218,7 @@ server.registerTool(
       openWorldHint: false,
     },
   },
-  async ({ id }) => {
+  async ({ id }: { id: string }) => {
     const tool = await getAioceanTool(id);
     if (!tool) {
       return {
@@ -127,7 +231,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+mcpServer.registerTool(
   'list_ai_ocean_categories',
   {
     title: 'List AI Ocean Categories',
@@ -153,7 +257,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+mcpServer.registerTool(
   'list_agent_review_tools',
   {
     title: 'List Agent Review Tools',
@@ -190,7 +294,7 @@ const submissionSchema = z.object({
   updated_at: z.string(),
 })
 
-server.registerTool(
+mcpServer.registerTool(
   'list_submissions',
   {
     title: 'List Submissions',
@@ -207,7 +311,10 @@ server.registerTool(
       openWorldHint: false,
     },
   },
-  async ({ status }) => {
+  async ({ status }: { status?: 'pending' | 'approved' | 'rejected' }, extra: McpRequestExtra) => {
+    const denied = requireAdmin(extra);
+    if (denied) return denied;
+
     const submissions = await listSubmissions(status)
     if (!submissions) {
       return {
@@ -220,7 +327,7 @@ server.registerTool(
   },
 )
 
-server.registerTool(
+mcpServer.registerTool(
   'decide_submission',
   {
     title: 'Decide Submission',
@@ -239,7 +346,10 @@ server.registerTool(
       openWorldHint: false,
     },
   },
-  async ({ id, status, admin_notes }) => {
+  async ({ id, status, admin_notes }: { id: string; status: 'approved' | 'rejected' | 'pending'; admin_notes?: string }, extra: McpRequestExtra) => {
+    const denied = requireAdmin(extra);
+    if (denied) return denied;
+
     const submission = await decideSubmission(id, status, admin_notes)
     if (!submission) {
       return {
@@ -252,7 +362,7 @@ server.registerTool(
   },
 )
 
-server.registerResource(
+mcpServer.registerResource(
   'agent-review-tools',
   'agent-tools://review-agent',
   {
@@ -260,7 +370,7 @@ server.registerResource(
     description: 'Internal AI SDK tools loaded by the review agent from packages/agent/src/tools.',
     mimeType: 'application/json',
   },
-  async (uri) => ({
+  async (uri: URL) => ({
     contents: [
       {
         uri: uri.href,
@@ -271,11 +381,55 @@ server.registerResource(
   }),
 );
 
+const requestHandlers = (server.server as unknown as { _requestHandlers: Map<string, (request: unknown, extra: McpRequestExtra) => Promise<{ tools: Tool[] }>> })._requestHandlers;
+const defaultListToolsHandler = requestHandlers.get('tools/list');
+
+if (defaultListToolsHandler) {
+  server.server.setRequestHandler(ListToolsRequestSchema, async (request, extra: McpRequestExtra) => {
+    const result = await defaultListToolsHandler(request, extra);
+    if (scopesFromExtra(extra).includes('mcp:admin')) {
+      return result;
+    }
+
+    return {
+      tools: result.tools.filter((tool) => !ADMIN_TOOLS.has(tool.name)),
+    };
+  });
+}
+
 const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined });
 await server.connect(transport);
 
-export const app = createMcpHonoApp();
-app.all('/', async (c, next) => {
-    console.log('Received request with headers:', Object.fromEntries(c.req.raw.headers.entries()));
-    await next()
-}, c => transport.handleRequest(c.req.raw));
+export const app = new Hono<{ Variables: { auth: AuthContext } }>();
+
+app.use('/', async (c, next) => {
+  const authorization = c.req.header('Authorization') ?? '';
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
+  const auth = match ? verifyBearerToken(match[1]) : null;
+
+  if (!auth) {
+    return c.json(
+      { error: 'Unauthorized' },
+      401,
+      {
+        'WWW-Authenticate': `Bearer resource_metadata=\"${OAUTH_METADATA_URL}\"`,
+      },
+    );
+  }
+
+  c.set('auth', auth);
+  await next();
+});
+
+app.all('/', (c) => {
+  const auth = c.get('auth') as AuthContext;
+  return transport.handleRequest(c.req.raw, {
+    authInfo: {
+      token: auth.token,
+      clientId: auth.clientId,
+      scopes: auth.scopes,
+      expiresAt: auth.expiresAt,
+      extra: { userId: auth.userId },
+    },
+  });
+});

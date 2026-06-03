@@ -45,3 +45,36 @@ export function saveAgentReport(runId: string, report: string) {
     body: JSON.stringify({ report }),
   })
 }
+
+export async function listAioceanTools(params: { search?: string; category?: string } = {}) {
+  const query = new URLSearchParams()
+  if (params.search) query.set('search', params.search)
+  if (params.category) query.set('category', params.category)
+  const suffix = query.toString() ? `?${query}` : ''
+  const payload = await phpFetch(`/api/tools${suffix}`)
+  return payload?.data ?? null
+}
+
+export async function getAioceanTool(id: string) {
+  const payload = await phpFetch(`/api/tools/${encodeURIComponent(id)}`)
+  return payload?.data ?? null
+}
+
+export async function listAioceanCategories() {
+  const payload = await phpFetch('/api/categories')
+  return payload?.data?.categories ?? null
+}
+
+export async function listSubmissions(status?: string) {
+  const suffix = status ? `?status=${encodeURIComponent(status)}` : ''
+  const payload = await phpFetch(`/api/admin/submissions${suffix}`)
+  return payload?.data?.submissions ?? null
+}
+
+export async function decideSubmission(id: string, status: string, adminNotes?: string) {
+  const payload = await phpFetch(`/api/admin/submissions/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status, admin_notes: adminNotes }),
+  })
+  return payload?.data?.submission ?? payload?.data ?? null
+}

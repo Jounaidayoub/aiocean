@@ -29,6 +29,14 @@ use App\Features\Tools\ToolService;
 use App\Features\Votes\VoteController;
 use App\Features\Votes\VoteRepository;
 use App\Features\Votes\VoteService;
+use App\Features\OAuth\OAuthController;
+use App\Features\OAuth\OAuthServerFactory;
+use App\Features\OAuth\Repositories\AccessTokenRepository;
+use App\Features\OAuth\Repositories\AuthCodeRepository;
+use App\Features\OAuth\Repositories\ClientRepository;
+use App\Features\OAuth\Repositories\FileStore;
+use App\Features\OAuth\Repositories\RefreshTokenRepository;
+use App\Features\OAuth\Repositories\ScopeRepository;
 
 use App\Features\Users\UserController;
 use App\Features\Users\UserRepository;
@@ -150,6 +158,18 @@ final class Application
         $this->controllers[PasswordResetController::class] = new PasswordResetController($passwordResetService);
 
         $this->controllers[SubmissionController::class] = new SubmissionController($submissionService, $currentUser);
+        $oauthConfig = $this->config['oauth'];
+        $oauthStoragePath = $this->basePath . '/storage/oauth';
+        $oauthFactory = new OAuthServerFactory(
+            new ClientRepository($oauthConfig),
+            new ScopeRepository($userRepo),
+            new AccessTokenRepository(new FileStore($oauthStoragePath . '/access_tokens.json')),
+            new AuthCodeRepository(new FileStore($oauthStoragePath . '/auth_codes.json')),
+            new RefreshTokenRepository(new FileStore($oauthStoragePath . '/refresh_tokens.json')),
+            $oauthConfig,
+        );
+        $this->controllers[OAuthController::class] = new OAuthController($oauthFactory, $oauthConfig);
+
     }
 
     /**

@@ -15,7 +15,8 @@
     "ai": "^6.0.191",
     "dotenv": "^17.4.2",
     "hono": "^4.12.22",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "@modelcontextprotocol/sdk": "1.29.0"
   },
   "devDependencies": {
     "@ai-sdk/devtools": "^0.0.18",
