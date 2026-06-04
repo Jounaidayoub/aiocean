@@ -3,8 +3,8 @@ import { useSearchParams, useNavigate } from "react-router-dom"
 import { useAuth } from "@/hooks/use-auth"
 import { get, post } from "@/shared/api/client"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
+import { LoginForm } from "@/components/login-form"
 import bgImage from "@/assets/wave-blue.png"
 import heroImage from "@/assets/ai-ocean.png"
 
@@ -31,95 +31,6 @@ function collectParams(searchParams: URLSearchParams): Record<string, string> {
     if (val) params[key] = val
   }
   return params
-}
-
-function LoginForm({ onLogin }: { onLogin: () => void }) {
-  const { login, error } = useAuth()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [localErr, setLocalErr] = useState<string | null>(null)
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setLocalErr(null)
-    try {
-      await login(email, password)
-      onLogin()
-    } catch (err) {
-      setLocalErr(err instanceof Error ? err.message : "Login failed")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const displayErr = localErr || error
-
-  return (
-    <div className="relative flex min-h-screen items-center justify-center p-6 md:p-10 overflow-hidden">
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${bgImage})` }}
-      >
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
-      </div>
-      <div className="relative w-full max-w-sm z-10">
-        <Card className="overflow-hidden p-0">
-          <CardContent className="grid p-0 min-h-[400px] md:grid-cols-2">
-            <div className="flex flex-col justify-center p-6 md:p-8">
-              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                <div className="flex flex-col items-center gap-2 text-center">
-                  <h1 className="text-2xl font-bold">Sign in to continue</h1>
-                  <p className="text-balance text-muted-foreground text-sm">
-                    Sign in with your AI Ocean account to authorize this application.
-                  </p>
-                </div>
-                {displayErr && (
-                  <div className="text-sm font-medium text-destructive text-center">
-                    {displayErr}
-                  </div>
-                )}
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="auth-email" className="text-sm font-medium">Email</label>
-                  <Input
-                    id="auth-email"
-                    type="email"
-                    placeholder="m@example.com"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex items-center">
-                    <label htmlFor="auth-password" className="text-sm font-medium">Password</label>
-                  </div>
-                  <Input
-                    id="auth-password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-                <Button type="submit" disabled={loading}>
-                  {loading ? "Signing in..." : "Sign in"}
-                </Button>
-              </form>
-            </div>
-            <div className="relative hidden bg-muted md:block">
-              <img
-                src={heroImage}
-                alt="AI OCEAN"
-                className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.4]"
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  )
 }
 
 function ConsentScreen({
@@ -327,7 +238,7 @@ export function AuthorizePage() {
   }
 
   if (!user) {
-    return <LoginForm onLogin={handleLoginSuccess} />
+    return <LoginForm onSuccess={handleLoginSuccess} />
   }
 
   if (infoLoading) {

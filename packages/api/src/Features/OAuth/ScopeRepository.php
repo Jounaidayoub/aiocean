@@ -10,7 +10,10 @@ use League\OAuth2\Server\Repositories\ScopeRepositoryInterface;
 
 final class ScopeRepository implements ScopeRepositoryInterface
 {
-    public function __construct(private OAuthRepository $repo) {}
+    public function __construct(
+        private OAuthRepository $repo,
+        private \App\Features\Users\UserRepositoryInterface $userRepo
+    ) {}
 
     public function getScopeEntityByIdentifier(string $identifier): ?ScopeEntityInterface
     {
@@ -31,6 +34,21 @@ final class ScopeRepository implements ScopeRepositoryInterface
         ?string $userIdentifier = null,
         ?string $authCodeId = null,
     ): array {
-        return $scopes;
+        if ($userIdentifier !== null) {
+            $user = $this->userRepo->findById($userIdentifier);
+            $isAdmin = $user !== null && $user->role === 'admin';
+
+            if (!$isAdmin) {
+                $scopes = array_filter($scopes, function ($scope) {
+                    return $scope->getIdentifier() !== 'mcp:admin';
+                });
+            }
+        } else {
+            // If there is no user associated, strip mcp:admin scope by default
+            $scopes = array_filter($scopes, function ($scope) {
+                return $scope->getIdentifier() !== 'mcp:admin';
+            });
+        }
+        return array_values($scopes);
     }
 }

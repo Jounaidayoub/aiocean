@@ -1,6 +1,29 @@
+import crypto from 'crypto'
+
 const API_BASE = process.env.PHP_API_BASE_URL || 'http://localhost:8080'
+const INTERNAL_SHARED_SECRET = process.env.INTERNAL_SHARED_SECRET || ''
 
 type ApiInit = RequestInit & { headers?: Record<string, string> }
+
+function getInternalAuthHeaders(method: string, path: string, userId: string, isAdmin: boolean): Record<string, string> {
+  if (!INTERNAL_SHARED_SECRET || !userId) {
+    return {}
+  }
+  const timestamp = Math.floor(Date.now() / 1000).toString()
+  const adminVal = isAdmin ? '1' : '0'
+  const message = `${timestamp}:${method.toUpperCase()}:${path}:${userId}:${adminVal}`
+  const signature = crypto
+    .createHmac('sha256', INTERNAL_SHARED_SECRET)
+    .update(message)
+    .digest('hex')
+
+  return {
+    'X-Internal-Admin': adminVal,
+    'X-Internal-User-Id': userId,
+    'X-Internal-Timestamp': timestamp,
+    'X-Internal-Signature': signature,
+  }
+}
 
 async function apiFetch<T = unknown>(path: string, options: ApiInit = {}): Promise<T | null> {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -122,15 +145,29 @@ export type Submission = {
   updated_at: string
 }
 
-export async function listSubmissions(status?: string): Promise<Submission[] | null> {
+export async function listSubmissions(status?: string, userId?: string, isAdmin?: boolean): Promise<Submission[] | null> {
   const qs = status ? `?status=${encodeURIComponent(status)}` : ''
-  const result = await apiFetch<{ data: { submissions: Submission[] } }>(`/api/admin/submissions${qs}`)
+  const basePath = '/api/admin/submissions'
+  const headers = userId ? getInternalAuthHeaders('GET', basePath, userId, !!isAdmin) : {}
+  const result = await apiFetch<{ data: { submissions: Submission[] } }>(`${basePath}${qs}`, {
+    method: 'GET',
+    headers,
+  })
   return result?.data?.submissions ?? null
 }
 
-export async function decideSubmission(id: string, status: 'approved' | 'rejected' | 'pending', adminNotes?: string): Promise<Submission | null> {
-  const result = await apiFetch<{ data: { submission: Submission } }>(`/api/admin/submissions/${encodeURIComponent(id)}`, {
+export async function decideSubmission(
+  id: string,
+  status: 'approved' | 'rejected' | 'pending',
+  adminNotes?: string,
+  userId?: string,
+  isAdmin?: boolean
+): Promise<Submission | null> {
+  const basePath = `/api/admin/submissions/${encodeURIComponent(id)}`
+  const headers = userId ? getInternalAuthHeaders('PATCH', basePath, userId, !!isAdmin) : {}
+  const result = await apiFetch<{ data: { submission: Submission } }>(basePath, {
     method: 'PATCH',
+    headers,
     body: JSON.stringify({ status, admin_notes: adminNotes }),
   })
   return result?.data?.submission ?? null

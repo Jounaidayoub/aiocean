@@ -48,7 +48,13 @@ const authMiddleware = createAuthMiddleware({
 })
 
 app.use('/mcp', authMiddleware)
-app.all('/mcp', (c) => handleMcpRequest(c.req.raw))
+app.all('/mcp', (c) => {
+  const auth = c.get('auth')
+  const scopeStr = (auth?.payload?.scope as string) || ''
+  const scopes = scopeStr.split(/\s+/).filter(Boolean)
+  const userId = (auth?.payload?.sub as string) || ''
+  return handleMcpRequest(c.req.raw, scopes, userId)
+})
 
 serve({ fetch: app.fetch, port: PORT }, (info) => {
   console.log(`Agent service running on http://localhost:${info.port}`)

@@ -7,6 +7,7 @@ namespace App\Core;
 use App\Core\Middleware\Pipeline;
 use App\Core\Middleware\CorsMiddleware;
 use App\Core\Middleware\SessionMiddleware;
+use App\Core\Middleware\InternalAuthMiddleware;
 use App\Core\Middleware\JsonBodyParser;
 use App\Features\Clicks\ClickController;
 use App\Features\Clicks\ClickRepository;
@@ -43,7 +44,6 @@ use App\Features\OAuth\AccessTokenRepository as OAuthAccessTokenRepository;
 use App\Features\OAuth\AuthCodeRepository as OAuthAuthCodeRepository;
 use App\Features\OAuth\AuthorizationServerFactory;
 use App\Features\OAuth\ClientRepository as OAuthClientRepository;
-use App\Features\OAuth\LoginController;
 use App\Features\OAuth\OAuthController;
 use App\Features\OAuth\OAuthRepository;
 use App\Features\OAuth\RefreshTokenRepository as OAuthRefreshTokenRepository;
@@ -85,6 +85,7 @@ final class Application
         $corsOrigin = $this->config['cors_origin'] ?? '*';
         $this->pipeline->pipe(new CorsMiddleware($corsOrigin));
         $this->pipeline->pipe(new SessionMiddleware());
+        $this->pipeline->pipe(new InternalAuthMiddleware($this->config['oauth']['internal_shared_secret'] ?? ''));
         $this->pipeline->pipe(new JsonBodyParser());
     }
 
@@ -170,7 +171,7 @@ final class Application
         $oauthConfig = $this->config['oauth'];
         $oauthRepo = new OAuthRepository($pdo);
         $oauthClientRepo = new OAuthClientRepository($oauthRepo);
-        $oauthScopeRepo = new OAuthScopeRepository($oauthRepo);
+        $oauthScopeRepo = new OAuthScopeRepository($oauthRepo, $userRepo);
         $oauthAccessTokenRepo = new OAuthAccessTokenRepository(
             $oauthRepo,
             $oauthConfig['issuer'],
@@ -192,7 +193,6 @@ final class Application
             $userService,
             $oauthConfig,
         );
-        $this->controllers[LoginController::class] = new LoginController($userService);
     }
 
     /**

@@ -9,12 +9,15 @@ import {
   listSubmissions,
 } from './php-client.js'
 
-export function createMcpServer(): McpServer {
+export function createMcpServer(scopes: string[], userId: string): McpServer {
   const server = new McpServer(
     { name: 'aiocean-agent', version: '1.0.0' },
     {
       instructions:
-        'Use search_ai_ocean_tools to discover AI tools in the AI Ocean directory, then get_ai_ocean_tool for full details. Use list_submissions to view pending tool submissions, and decide_submission to approve or reject them.',
+        'Use search_ai_ocean_tools to discover AI tools in the AI Ocean directory, then get_ai_ocean_tool for full details.' +
+        (scopes.includes('mcp:admin')
+          ? ' Use list_submissions to view pending tool submissions, and decide_submission to approve or reject them.'
+          : ''),
     },
   )
 
@@ -78,48 +81,50 @@ export function createMcpServer(): McpServer {
     },
   )
 
-  server.registerTool(
-    'list_submissions',
-    {
-      title: 'List Submissions',
-      description: 'List tool submissions. Optionally filter by status (pending, approved, rejected).',
-      inputSchema: {
-        status: z.enum(['pending', 'approved', 'rejected']).optional().describe('Filter by submission status'),
+  if (scopes.includes('mcp:admin')) {
+    server.registerTool(
+      'list_submissions',
+      {
+        title: 'List Submissions',
+        description: 'List tool submissions. Optionally filter by status (pending, approved, rejected).',
+        inputSchema: {
+          status: z.enum(['pending', 'approved', 'rejected']).optional().describe('Filter by submission status'),
+        },
+        annotations: { readOnlyHint: true, openWorldHint: false },
       },
-      annotations: { readOnlyHint: true, openWorldHint: false },
-    },
-    async ({ status }) => {
-      const submissions = await listSubmissions(status)
-      if (!submissions) {
-        return { content: [{ type: 'text', text: 'Failed to load submissions.' }], isError: true }
-      }
-      return { content: [{ type: 'text', text: JSON.stringify({ submissions }, null, 2) }] }
-    },
-  )
-
-  server.registerTool(
-    'decide_submission',
-    {
-      title: 'Decide Submission',
-      description: 'Approve, reject, or revert a tool submission to pending. Approved tools become active in the directory.',
-      inputSchema: {
-        id: z.string().describe('Submission ID from list_submissions.'),
-        status: z.enum(['approved', 'rejected', 'pending']).describe('New status for the submission.'),
-        admin_notes: z.string().optional().describe('Optional notes explaining the decision.'),
-      },
-      annotations: { readOnlyHint: false, openWorldHint: false },
-    },
-    async ({ id, status, admin_notes }) => {
-      const submission = await decideSubmission(id, status, admin_notes)
-      if (!submission) {
-        return {
-          content: [{ type: 'text', text: `Failed to update submission ${id}.` }],
-          isError: true,
+      async ({ status }) => {
+        const submissions = await listSubmissions(status, userId, scopes.includes('mcp:admin'))
+        if (!submissions) {
+          return { content: [{ type: 'text', text: 'Failed to load submissions.' }], isError: true }
         }
-      }
-      return { content: [{ type: 'text', text: JSON.stringify({ submission }, null, 2) }] }
-    },
-  )
+        return { content: [{ type: 'text', text: JSON.stringify({ submissions }, null, 2) }] }
+      },
+    )
+
+    server.registerTool(
+      'decide_submission',
+      {
+        title: 'Decide Submission',
+        description: 'Approve, reject, or revert a tool submission to pending. Approved tools become active in the directory.',
+        inputSchema: {
+          id: z.string().describe('Submission ID from list_submissions.'),
+          status: z.enum(['approved', 'rejected', 'pending']).describe('New status for the submission.'),
+          admin_notes: z.string().optional().describe('Optional notes explaining the decision.'),
+        },
+        annotations: { readOnlyHint: false, openWorldHint: false },
+      },
+      async ({ id, status, admin_notes }) => {
+        const submission = await decideSubmission(id, status, admin_notes, userId, scopes.includes('mcp:admin'))
+        if (!submission) {
+          return {
+            content: [{ type: 'text', text: `Failed to update submission ${id}.` }],
+            isError: true,
+          }
+        }
+        return { content: [{ type: 'text', text: JSON.stringify({ submission }, null, 2) }] }
+      },
+    )
+  }
 
   return server
 }
@@ -129,9 +134,9 @@ export function createMcpServer(): McpServer {
  * fresh McpServer (stateless mode). This is the simplest pattern that works
  * with both stateless serverless runtimes and stateful long-running servers.
  */
-export async function handleMcpRequest(req: Request): Promise<Response> {
+export async function handleMcpRequest(req: Request, scopes: string[], userId: string): Promise<Response> {
   const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined })
-  const server = createMcpServer()
+  const server = createMcpServer(scopes, userId)
   await server.connect(transport)
   return transport.handleRequest(req)
 }
