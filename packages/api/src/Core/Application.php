@@ -39,6 +39,15 @@ use App\Features\Users\UserService;
 use App\Features\PasswordReset\PasswordResetController;
 use App\Features\PasswordReset\PasswordResetRepository;
 use App\Features\PasswordReset\PasswordResetService;
+use App\Features\OAuth\AccessTokenRepository as OAuthAccessTokenRepository;
+use App\Features\OAuth\AuthCodeRepository as OAuthAuthCodeRepository;
+use App\Features\OAuth\AuthorizationServerFactory;
+use App\Features\OAuth\ClientRepository as OAuthClientRepository;
+use App\Features\OAuth\LoginController;
+use App\Features\OAuth\OAuthController;
+use App\Features\OAuth\OAuthRepository;
+use App\Features\OAuth\RefreshTokenRepository as OAuthRefreshTokenRepository;
+use App\Features\OAuth\ScopeRepository as OAuthScopeRepository;
 use App\Shared\EmailService;
 use App\Shared\CurrentUser;
 use PDO;
@@ -157,6 +166,33 @@ final class Application
         $this->controllers[PasswordResetController::class] = new PasswordResetController($passwordResetService);
 
         $this->controllers[SubmissionController::class] = new SubmissionController($submissionService, $currentUser);
+
+        $oauthConfig = $this->config['oauth'];
+        $oauthRepo = new OAuthRepository($pdo);
+        $oauthClientRepo = new OAuthClientRepository($oauthRepo);
+        $oauthScopeRepo = new OAuthScopeRepository($oauthRepo);
+        $oauthAccessTokenRepo = new OAuthAccessTokenRepository(
+            $oauthRepo,
+            $oauthConfig['issuer'],
+            $oauthConfig['resource_server'],
+        );
+        $oauthAuthCodeRepo = new OAuthAuthCodeRepository($oauthRepo);
+        $oauthRefreshTokenRepo = new OAuthRefreshTokenRepository($oauthRepo);
+        $authorizationServer = (new AuthorizationServerFactory())->build(
+            $oauthClientRepo,
+            $oauthAccessTokenRepo,
+            $oauthScopeRepo,
+            $oauthAuthCodeRepo,
+            $oauthRefreshTokenRepo,
+            $oauthConfig,
+        );
+        $this->controllers[OAuthController::class] = new OAuthController(
+            $authorizationServer,
+            $oauthRepo,
+            $userService,
+            $oauthConfig,
+        );
+        $this->controllers[LoginController::class] = new LoginController($userService);
     }
 
     /**
