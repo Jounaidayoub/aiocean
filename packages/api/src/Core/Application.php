@@ -8,6 +8,9 @@ use App\Core\Middleware\Pipeline;
 use App\Core\Middleware\CorsMiddleware;
 use App\Core\Middleware\SessionMiddleware;
 use App\Core\Middleware\JsonBodyParser;
+use App\Features\Clicks\ClickController;
+use App\Features\Clicks\ClickRepository;
+use App\Features\Clicks\ClickService;
 use App\Features\Collections\CollectionController;
 use App\Features\Collections\CollectionRepository;
 use App\Features\Collections\CollectionService;
@@ -119,6 +122,9 @@ final class Application
         $reportRepo = new ReportRepository($pdo);
         $reportService = new ReportService($reportRepo, $toolRepo);
 
+        $clickRepo = new ClickRepository($pdo);
+        $clickService = new ClickService($clickRepo, $toolRepo);
+
         $collectionRepo = new CollectionRepository($pdo);
         $collectionService = new CollectionService($collectionRepo, $toolRepo);
 
@@ -135,6 +141,7 @@ final class Application
         $this->controllers[ReviewController::class] = new ReviewController($reviewService, $currentUser);
         $this->controllers[VoteController::class] = new VoteController($voteService, $currentUser);
         $this->controllers[ReportController::class] = new ReportController($reportService, $currentUser);
+        $this->controllers[ClickController::class] = new ClickController($clickService, $currentUser);
         $this->controllers[CollectionController::class] = new CollectionController($collectionService, $currentUser);
         $agentRepo = new AgentRepository($pdo);
         $agentService = new AgentService($agentRepo);
