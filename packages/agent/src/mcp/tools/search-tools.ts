@@ -1,8 +1,8 @@
 import { z } from 'zod'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { listAioceanTools } from '../../client'
+import { ApiClient } from '../../client'
 
-export function registerSearchTools(server: McpServer) {
+export function registerSearchTools(server: McpServer, client: ApiClient) {
   server.registerTool(
     'search_ai_ocean_tools',
     {
@@ -16,7 +16,7 @@ export function registerSearchTools(server: McpServer) {
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async ({ query, category, limit }) => {
-      const result = await listAioceanTools({ search: query, category })
+      const result = await client.listTools({ search: query, category })
       if (!result) {
         return { content: [{ type: 'text', text: 'Failed to load tools from the API.' }], isError: true }
       }

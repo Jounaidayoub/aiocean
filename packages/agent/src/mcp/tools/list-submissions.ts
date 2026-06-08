@@ -1,8 +1,8 @@
 import { z } from 'zod'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { listSubmissions } from '../../client'
+import { ApiClient } from '../../client'
 
-export function registerListSubmissions(server: McpServer, userId: string, isAdmin: boolean) {
+export function registerListSubmissions(server: McpServer, client: ApiClient) {
   server.registerTool(
     'list_submissions',
     {
@@ -14,7 +14,7 @@ export function registerListSubmissions(server: McpServer, userId: string, isAdm
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async ({ status }) => {
-      const submissions = await listSubmissions(status, userId, isAdmin)
+      const submissions = await client.listSubmissions(status)
       if (!submissions) {
         return { content: [{ type: 'text', text: 'Failed to load submissions.' }], isError: true }
       }

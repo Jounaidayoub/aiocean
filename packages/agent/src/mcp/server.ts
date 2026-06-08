@@ -5,16 +5,19 @@ import {
   registerGetTool,
   registerListCategories,
   registerListSubmissions,
-  registerDecideSubmission
+  registerDecideSubmission,
+  registerSubmitSubmission
 } from './tools'
+import { ApiClient } from '../client'
 
-export function createMcpServer(scopes: string[], userId: string): McpServer {
-  const isAdmin = scopes.includes('mcp:admin')
+export function createMcpServer(client: ApiClient): McpServer {
+  const isAdmin = client.getIsAdmin()
   const server = new McpServer(
     { name: 'aiocean-agent', version: '1.0.0' },
     {
       instructions:
         'Use search_ai_ocean_tools to discover AI tools in the AI Ocean directory, then get_ai_ocean_tool for full details.' +
+        ' Use submit_submission to submit new AI tools to the review queue.' +
         (isAdmin
           ? ' Use list_submissions to view pending tool submissions, and decide_submission to approve or reject them.'
           : ''),
@@ -24,14 +27,15 @@ export function createMcpServer(scopes: string[], userId: string): McpServer {
   // Register public tools
   // TODO : exctact the standalone tools and expose them as a tool registry
   
-  registerSearchTools(server)
-  registerGetTool(server)
-  registerListCategories(server)
+  registerSearchTools(server, client)
+  registerGetTool(server, client)
+  registerListCategories(server, client)
+  registerSubmitSubmission(server, client)
 
   // Register admin-only tools
   if (isAdmin) {
-    registerListSubmissions(server, userId, isAdmin)
-    registerDecideSubmission(server, userId, isAdmin)
+    registerListSubmissions(server, client)
+    registerDecideSubmission(server, client)
   }
 
   return server
@@ -42,9 +46,9 @@ export function createMcpServer(scopes: string[], userId: string): McpServer {
  * fresh McpServer (stateless mode). This is the simplest pattern that works
  * with both stateless serverless runtimes and stateful long-running servers.
  */
-export async function handleMcpRequest(req: Request, scopes: string[], userId: string): Promise<Response> {
+export async function handleMcpRequest(req: Request, client: ApiClient): Promise<Response> {
   const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined })
-  const server = createMcpServer(scopes, userId)
+  const server = createMcpServer(client)
   await server.connect(transport)
   return transport.handleRequest(req)
 }

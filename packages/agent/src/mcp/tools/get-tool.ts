@@ -1,8 +1,8 @@
 import { z } from 'zod'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { getAioceanTool } from '../../client'
+import { ApiClient } from '../../client'
 
-export function registerGetTool(server: McpServer) {
+export function registerGetTool(server: McpServer, client: ApiClient) {
   server.registerTool(
     'get_ai_ocean_tool',
     {
@@ -12,7 +12,7 @@ export function registerGetTool(server: McpServer) {
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async ({ id }) => {
-      const tool = await getAioceanTool(id)
+      const tool = await client.getTool(id)
       if (!tool) {
         return { content: [{ type: 'text', text: `Tool not found: ${id}` }], isError: true }
       }

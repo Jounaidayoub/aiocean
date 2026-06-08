@@ -4,4 +4,9 @@ import { config } from '../../config';
 // We export the ready-made tool from Exa's AI SDK.
 export const webSearchTool = webSearch({
   apiKey: config.exaApiKey,
+  contents:{
+    text:{
+      maxCharacters: 1000
+    }
+  }
 });

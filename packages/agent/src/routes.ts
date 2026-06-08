@@ -3,6 +3,7 @@ import { config } from './config'
 import { createAuthMiddleware, type AppEnv } from './auth-middleware'
 import { handleMcpRequest } from './mcp'
 import { runAgentReview } from './review'
+import { createApiClient } from './client'
 
 export const apiRouter = new Hono<AppEnv>()
 
@@ -45,5 +46,8 @@ mcpRouter.all('/mcp', authMiddleware, (c) => {
   const scopeStr = (auth?.payload?.scope as string) || ''
   const scopes = scopeStr.split(/\s+/).filter(Boolean)
   const userId = (auth?.payload?.sub as string) || ''
-  return handleMcpRequest(c.req.raw, scopes, userId)
+  const isAdmin = scopes.includes('mcp:admin')
+
+  const client = createApiClient({ userId, isAdmin })
+  return handleMcpRequest(c.req.raw, client)
 })
