@@ -149,6 +149,29 @@ export function SubmitToolPage() {
     )
   }
 
+  if (targetSubmission && targetSubmission.status !== "changes_requested") {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-20 text-center">
+        <div className="flex justify-center mb-6">
+          <AlertCircle className="size-16 text-amber-500" />
+        </div>
+        <h1 className="text-3xl font-bold mb-4">No changes required</h1>
+        <p className="text-lg text-muted-foreground mb-8">
+          This submission is currently <span className="font-semibold text-foreground">{targetSubmission.status.replace("_", " ")}</span>. 
+          You can only make updates when changes are requested by a reviewer.
+        </p>
+        <div className="flex gap-4 justify-center">
+          <Button variant="outline" onClick={() => navigate("/profile")}>
+            View My Submissions
+          </Button>
+          <Button onClick={() => navigate("/home")}>
+            Browse Tools
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <Button variant="ghost" className="mb-6 gap-2" onClick={() => navigate(-1)}>
