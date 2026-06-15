@@ -50,6 +50,7 @@ import { getAdminTools, createAdminTool, updateAdminTool, deleteAdminTool, getAd
 import { getAdminReports, dismissAdminReport, type AdminReport } from "@/shared/api/reports"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "@/hooks/use-auth"
+import { ToolLogo } from "@/components/ToolLogo"
 
 const getModelProviderName = (modelId: string | undefined, provider: string | undefined) => {
   if (!modelId) return provider || "openrouter"
@@ -610,7 +611,16 @@ export function AdminPage() {
                       {filteredSubmissions.map((sub) => (
                         <tr key={sub.id} className="hover:bg-muted/50 transition-colors group">
                           <td className="py-2 px-3 font-semibold text-foreground">
-                            {sub.tool_name}
+                            <div className="flex items-center gap-2">
+                              <ToolLogo
+                                name={sub.tool_name}
+                                logo={null}
+                                url={sub.tool_website}
+                                className="size-4"
+                                raw
+                              />
+                              <span>{sub.tool_name}</span>
+                            </div>
                           </td>
                           <td className="py-2 px-3 text-muted-foreground">
                             <div className="flex flex-col">
@@ -721,13 +731,13 @@ export function AdminPage() {
                       {filteredTools.map((t) => (
                         <tr key={t.id} className="hover:bg-muted/50 transition-colors group">
                           <td className="py-2 px-3 font-semibold text-foreground flex items-center gap-2">
-                            {t.logo ? (
-                              <img src={t.logo} alt="" className="size-6 rounded object-cover" />
-                            ) : (
-                              <div className="size-6 rounded bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px]">
-                                {t.name[0]}
-                              </div>
-                            )}
+                            <ToolLogo
+                              name={t.name}
+                              logo={t.logo}
+                              url={t.url}
+                              className="size-4"
+                              raw
+                            />
                             {t.name}
                           </td>
                           <td className="py-2 px-3 text-muted-foreground text-xs max-w-xs truncate">

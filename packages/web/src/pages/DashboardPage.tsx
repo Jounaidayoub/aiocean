@@ -10,6 +10,7 @@ import { getAdminSubmissions, type Submission } from "@/shared/api/submissions"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
 import { formatDate, statusClass, submissionStatusLabels, submitterLabel } from "@/components/dashboard/review-ui"
+import { ToolLogo } from "@/components/ToolLogo"
 
 export function DashboardPage() {
   const navigate = useNavigate()
@@ -194,7 +195,16 @@ export function DashboardPage() {
                     {filteredSubmissions.map((sub) => (
                       <tr key={sub.id} className="group hover:bg-muted/10 transition-colors">
                         <td className="py-4 pr-4 font-semibold text-foreground">
-                          {sub.tool_name}
+                          <div className="flex items-center gap-2">
+                            <ToolLogo
+                              name={sub.tool_name}
+                              logo={null}
+                              url={sub.tool_website}
+                              className="size-4"
+                              raw
+                            />
+                            <span>{sub.tool_name}</span>
+                          </div>
                         </td>
                         <td className="py-4 px-4 text-muted-foreground">
                           <div className="flex flex-col">

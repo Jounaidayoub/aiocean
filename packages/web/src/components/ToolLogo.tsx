@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Globe } from "lucide-react"
 
 /** Build an ordered list of logo URLs to try, best first. */
 function getLogoSources(logo?: string | null, url?: string | null): string[] {
@@ -24,16 +25,33 @@ interface ToolLogoProps {
   className?: string
   /** Inner image classes, e.g. "p-1.5". */
   imgClassName?: string
+  /** If true, render the image or icon directly without the border/bg container. */
+  raw?: boolean
 }
 
 /**
  * Shows a tool's logo with graceful fallback:
- * explicit logo_url -> Clearbit logo -> Google favicon -> first letter.
+ * explicit logo_url -> Clearbit logo -> Google favicon -> Globe placeholder icon.
  */
-export function ToolLogo({ name, logo, url, className, imgClassName }: ToolLogoProps) {
+export function ToolLogo({ name, logo, url, className, imgClassName, raw = false }: ToolLogoProps) {
   const sources = getLogoSources(logo, url)
   const [idx, setIdx] = useState(0)
   const src = sources[idx]
+  const hasImage = idx < sources.length
+
+  if (raw) {
+    if (!hasImage) {
+      return <Globe className={className ?? "size-4 text-muted-foreground/60"} />
+    }
+    return (
+      <img
+        src={src}
+        alt={name}
+        className={className ?? "size-4 object-contain"}
+        onError={() => setIdx((i) => i + 1)}
+      />
+    )
+  }
 
   return (
     <div
@@ -41,7 +59,7 @@ export function ToolLogo({ name, logo, url, className, imgClassName }: ToolLogoP
         className ?? "size-12 rounded-lg text-2xl"
       }`}
     >
-      <span>{name.charAt(0).toUpperCase()}</span>
+      {!hasImage && <Globe className="size-1/2 text-muted-foreground/60" />}
       {src && (
         <img
           src={src}
