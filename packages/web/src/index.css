@@ -8,7 +8,8 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #fafafa;
+  /* Softer, premium warm-gray background to contrast with pure white cards */
+  --background: #f4f5f6;
   --foreground: #09090b;
   --card: #ffffff;
   --card-foreground: #09090b;
@@ -16,15 +17,15 @@
   --popover-foreground: #09090b;
   --primary: #00adb5;
   --primary-foreground: #ffffff;
-  --secondary: #f4f4f5;
+  --secondary: #eef0f2;
   --secondary-foreground: #09090b;
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
-  --accent: #f4f4f5;
+  --muted: #eef0f2;
+  --muted-foreground: #6b7280;
+  --accent: #eef0f2;
   --accent-foreground: #09090b;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: #e4e4e7;
-  --input: #e4e4e7;
+  --border: #e2e5e9;
+  --input: #e2e5e9;
   --ring: #00adb5;
   --chart-1: #00adb5;
   --chart-2: #393e46;
@@ -36,9 +37,9 @@
   --sidebar-foreground: #09090b;
   --sidebar-primary: #00adb5;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f4f4f5;
+  --sidebar-accent: #eef0f2;
   --sidebar-accent-foreground: #09090b;
-  --sidebar-border: #e4e4e7;
+  --sidebar-border: #e2e5e9;
   --sidebar-ring: #00adb5;
 }
 
