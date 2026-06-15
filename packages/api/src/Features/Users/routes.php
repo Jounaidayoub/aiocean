@@ -10,3 +10,7 @@ Router::post('/api/login',    [UserController::class, 'login']);
 Router::post('/api/logout',   [UserController::class, 'logout']);
 Router::get('/api/me',        [UserController::class, 'me']);
 Router::patch('/api/me', [UserController::class, 'updateMe']);
+
+Router::get('/api/admin/users',         [UserController::class, 'adminIndex']);
+Router::patch('/api/admin/users/{id}',  [UserController::class, 'adminUpdate']);
+Router::delete('/api/admin/users/{id}', [UserController::class, 'adminDelete']);

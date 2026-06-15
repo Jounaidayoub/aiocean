@@ -38,12 +38,20 @@ export function Header() {
           {user ? (
             <>
               {user.role === "admin" && (
-                <Link
-                  to="/dashboard"
-                  className="text-foreground/80 transition-colors hover:text-primary"
-                >
-                  Dashboard
-                </Link>
+                <>
+                  <Link
+                    to="/admin"
+                    className="text-foreground/80 transition-colors hover:text-primary font-semibold text-primary"
+                  >
+                    Admin Panel
+                  </Link>
+                  <Link
+                    to="/dashboard"
+                    className="text-foreground/80 transition-colors hover:text-primary"
+                  >
+                    Reviews
+                  </Link>
+                </>
               )}
               <Link
                 to="/profile"

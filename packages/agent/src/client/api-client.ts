@@ -208,6 +208,11 @@ export function createApiClient(options: ApiClientOptions = {}) {
     async getAgentHistory(submissionId: string) {
       const result = await apiFetch<{ data: { agent_runs: any[] } }>(`/api/admin/agent/runs/${encodeURIComponent(submissionId)}/history`)
       return result?.data?.agent_runs ?? null
+    },
+
+    async getAdminSettings(): Promise<Record<string, string> | null> {
+      const result = await apiFetch<{ data: { settings: Record<string, string> } }>('/api/admin/settings')
+      return result?.data?.settings ?? null
     }
   }
 }

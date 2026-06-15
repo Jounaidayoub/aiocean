@@ -26,4 +26,15 @@ interface ToolRepositoryInterface
 
     /** @return string[] */
     public function categories(): array;
+
+    /** @return Tool[] */
+    public function findAllAdmin(): array;
+
+    public function create(array $data): string;
+
+    public function update(string $id, array $data): void;
+
+    public function delete(string $id): void;
+
+    public function allModels(): array;
 }

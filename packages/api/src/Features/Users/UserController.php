@@ -8,10 +8,13 @@ use App\Core\BaseController;
 use App\Core\Request;
 use App\Core\Response;
 
+use App\Shared\CurrentUser;
+
 final class UserController extends BaseController
 {
     public function __construct(
-        private UserService $userService
+        private UserService $userService,
+        private CurrentUser $currentUser,
     ) {}
 
     public function login(Request $request): Response
@@ -125,5 +128,36 @@ final class UserController extends BaseController
         ]);
     }
 
+    public function adminIndex(Request $request): Response
+    {
+        if (!$this->currentUser->isAdmin()) {
+            return $this->forbidden();
+        }
 
+        return $this->data(['users' => $this->userService->listUsers()]);
+    }
+
+    public function adminUpdate(Request $request): Response
+    {
+        if (!$this->currentUser->isAdmin()) {
+            return $this->forbidden();
+        }
+
+        $id = $request->param('id');
+        $body = $request->body();
+        
+        $this->userService->updateUser((string) $id, $body);
+        return $this->data(['message' => 'User updated successfully']);
+    }
+
+    public function adminDelete(Request $request): Response
+    {
+        if (!$this->currentUser->isAdmin()) {
+            return $this->forbidden();
+        }
+
+        $id = $request->param('id');
+        $this->userService->deleteUser((string) $id);
+        return $this->data(['message' => 'User deleted successfully']);
+    }
 }

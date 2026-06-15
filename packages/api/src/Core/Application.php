@@ -149,8 +149,8 @@ final class Application
             $this->config['oauth']['frontend_url'] ?? 'http://localhost:5173',
         );
 
-        $this->controllers[ToolController::class] = new ToolController($toolService);
-        $this->controllers[UserController::class] = new UserController($userService);
+        $this->controllers[ToolController::class] = new ToolController($toolService, $currentUser);
+        $this->controllers[UserController::class] = new UserController($userService, $currentUser);
         $this->controllers[ReviewController::class] = new ReviewController($reviewService, $currentUser);
         $this->controllers[VoteController::class] = new VoteController($voteService, $currentUser);
         $this->controllers[ReportController::class] = new ReportController($reportService, $currentUser);

@@ -13,4 +13,9 @@ interface UserRepositoryInterface
     public function updateProfile(string $id, string $name, string $email, ?string $pfpUrl): ?User;
     public function falsemail(string $email, string $userId): bool;
     public function updatePassword(string $id, string $passHash): void;
+
+    /** @return User[] */
+    public function findAll(): array;
+    public function updateUser(string $id, array $data): void;
+    public function deleteUser(string $id): void;
 }

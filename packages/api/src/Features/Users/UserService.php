@@ -70,6 +70,19 @@ final class UserService
         return ['user' => $updatedUser];
     }
 
+    public function listUsers(): array
+    {
+        $users = $this->userRepository->findAll();
+        return array_map(fn(User $u) => $u->toArray(), $users);
+    }
 
+    public function updateUser(string $id, array $data): void
+    {
+        $this->userRepository->updateUser($id, $data);
+    }
 
+    public function deleteUser(string $id): void
+    {
+        $this->userRepository->deleteUser($id);
+    }
 }

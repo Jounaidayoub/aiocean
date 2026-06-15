@@ -37,4 +37,24 @@ final class ReportController extends BaseController
 
         return $this->data(['report' => $result['report']], 201);
     }
+
+    public function adminIndex(Request $request): Response
+    {
+        if (!$this->currentUser->isAdmin()) {
+            return $this->forbidden();
+        }
+
+        return $this->data(['reports' => $this->reports->listAll()]);
+    }
+
+    public function adminDelete(Request $request): Response
+    {
+        if (!$this->currentUser->isAdmin()) {
+            return $this->forbidden();
+        }
+
+        $id = $request->param('id');
+        $this->reports->dismiss((string) $id);
+        return $this->data(['message' => 'Report dismissed successfully']);
+    }
 }

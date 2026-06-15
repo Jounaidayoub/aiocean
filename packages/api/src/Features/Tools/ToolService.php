@@ -64,4 +64,50 @@ final class ToolService
     {
         return $this->repository->categories();
     }
+
+    public function listAdmin(?string $search = null, ?string $category = null): array
+    {
+        $tools = $this->repository->findAllAdmin();
+
+        if ($category !== null && $category !== '') {
+            $tools = array_values(array_filter(
+                $tools,
+                fn(Tool $t) => strcasecmp($t->category, $category) === 0
+            ));
+        }
+
+        if ($search !== null && $search !== '') {
+            $q = strtolower($search);
+            $tools = array_values(array_filter(
+                $tools,
+                fn(Tool $t) => str_contains(strtolower($t->name), $q)
+                            || str_contains(strtolower($t->tagline), $q)
+            ));
+        }
+
+        return [
+            'tools' => array_map(fn(Tool $t) => $t->toArray(), $tools),
+            'total' => count($tools),
+        ];
+    }
+
+    public function create(array $data): string
+    {
+        return $this->repository->create($data);
+    }
+
+    public function update(string $id, array $data): void
+    {
+        $this->repository->update($id, $data);
+    }
+
+    public function delete(string $id): void
+    {
+        $this->repository->delete($id);
+    }
+
+    public function allModels(): array
+    {
+        return $this->repository->allModels();
+    }
 }

@@ -11,23 +11,6 @@ import {
 import { devToolsMiddleware } from "@ai-sdk/devtools";
 import { config } from '../config'
 
-const openrouter = createOpenRouter({
-  apiKey: config.openRouterApiKey,
-})
-const model = wrapLanguageModel(
-  {
-
-    model: openrouter('nvidia/nemotron-3-super-120b-a12b:free', {
-      extraBody: {
-        reasoning: {
-          max_tokens: 0,
-        },
-      }
-    }),
-    middleware: devToolsMiddleware()
-  }
-)
-
 function formatTodos(todos: TodoItem[]): string {
   return todos.map((t, i) => `${i + 1}. [${t.status}] ${t.content}`).join('\n')
 }
@@ -35,7 +18,63 @@ function formatTodos(todos: TodoItem[]): string {
 export async function runAgentReview(submission: SubmissionData) {
   console.log(`Starting review for submission ${submission.submission_id}`)
 
-  const client = createApiClient()
+  const client = createApiClient({ userId: 'agent', isAdmin: true })
+
+  // Load settings dynamically
+  let provider = 'openrouter'
+  let modelName = 'nvidia/nemotron-3-super-120b-a12b:free'
+  let temperature = 0.0
+  let systemPromptOverride = ''
+  let customApiKey = ''
+
+  try {
+    const settings = await client.getAdminSettings()
+    if (settings) {
+      provider = settings.agent_provider || 'openrouter'
+      modelName = settings.agent_model || (provider === 'google' ? 'gemini-1.5-flash' : provider === 'openai' ? 'gpt-4o-mini' : 'nvidia/nemotron-3-super-120b-a12b:free')
+      if (settings.agent_temperature !== undefined) {
+        temperature = parseFloat(settings.agent_temperature)
+        if (isNaN(temperature)) temperature = 0.0
+      }
+      systemPromptOverride = settings.agent_system_prompt || ''
+      customApiKey = settings[`${provider}_api_key`] || ''
+    }
+  } catch (err) {
+    console.error('Failed to fetch admin settings, using default model configuration:', err)
+  }
+
+  let baseModel: any
+
+  if (provider === 'google') {
+    const { createGoogleGenerativeAI } = await import('@ai-sdk/google')
+    const google = createGoogleGenerativeAI({
+      apiKey: customApiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_API_KEY
+    })
+    baseModel = google(modelName)
+  } else if (provider === 'openai') {
+    const { createOpenAI } = await import('@ai-sdk/openai')
+    const openai = createOpenAI({
+      apiKey: customApiKey || process.env.OPENAI_API_KEY
+    })
+    baseModel = openai(modelName)
+  } else {
+    // default to openrouter
+    const openrouter = createOpenRouter({
+      apiKey: customApiKey || config.openRouterApiKey,
+    })
+    baseModel = openrouter(modelName, {
+      extraBody: {
+        reasoning: {
+          max_tokens: 0,
+        },
+      }
+    })
+  }
+
+  const model = wrapLanguageModel({
+    model: baseModel,
+    middleware: devToolsMiddleware()
+  })
   const { submission_id, ...snapshotData } = submission
   const run = await client.createAgentRun(submission_id, snapshotData)
   const runId = run?.data?.id
@@ -73,7 +112,7 @@ export async function runAgentReview(submission: SubmissionData) {
     })
   }
 
-  const systemPrompt = `You are the AI Review Agent for AI Ocean, an AI tool directory.
+  const defaultSystemPrompt = `You are the AI Review Agent for AI Ocean, an AI tool directory.
 Your role is to fact-check tool submissions by searching the web, fetching relevant pages, and verifying the submitter's claims before an admin reviews them.
 
 Process Overview:
@@ -93,6 +132,7 @@ ${formatTodos(initialTodos)}
 
 before u start working and before each step , u need to update the todo list by calling the update_todo tool , this crucially helps the admin understand what are u doing
 `
+  const systemPrompt = systemPromptOverride || defaultSystemPrompt
 
   const history = await client.getAgentHistory(submission.submission_id)
   const previousRuns = (history ?? []).filter((run: any) => run.id !== runId && run.status === 'completed')
@@ -156,6 +196,7 @@ call the submit_report tool only when all the steps are completed and done
       system: systemPrompt,
       messages,
       tools,
+      temperature,
       stopWhen: stepCountIs(1),
       onStepFinish: async () => {
         // Save messages at the end of every step

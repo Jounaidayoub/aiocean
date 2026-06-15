@@ -179,4 +179,125 @@ final class ToolRepository implements ToolRepositoryInterface, ToolLookupInterfa
             externalRatingSource: $row['external_rating_source'] ?? null,
         );
     }
+
+    /** @return Tool[] */
+    public function findAllAdmin(): array
+    {
+        $stmt = $this->pdo->query("
+            SELECT t.*,
+                   GROUP_CONCAT(c.name) AS categories,
+                   COALESCE(AVG(r.rating), 0) AS avg_rating,
+                   COUNT(DISTINCT r.id)        AS review_count,
+                   COUNT(DISTINCT v.id)        AS vote_count,
+                   COUNT(DISTINCT tcl.user_id) AS click_count
+            FROM tools t
+            LEFT JOIN tool_category tc ON tc.tool_id = t.id
+            LEFT JOIN categories c     ON c.id = tc.category_id
+            LEFT JOIN reviews r        ON r.tool_id = t.id
+            LEFT JOIN votes v          ON v.tool_id = t.id
+            LEFT JOIN tool_clicks tcl  ON tcl.tool_id = t.id
+            GROUP BY t.id
+            ORDER BY t.name
+        ");
+
+        return array_map(
+            fn(array $row) => $this->hydrate($row),
+            $stmt->fetchAll(PDO::FETCH_ASSOC)
+        );
+    }
+
+    private function slugify(string $s): string
+    {
+        return strtolower(trim((string) preg_replace('/[^a-z0-9-]+/', '-', strtolower($s)), '-'));
+    }
+
+    public function create(array $data): string
+    {
+        $id = bin2hex(random_bytes(16));
+        $slug = $this->slugify($data['name']);
+        
+        $stmt = $this->pdo->prepare("
+            INSERT INTO tools (id, name, slug, url, short_description, description, pricing_model, logo_url, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+        $stmt->execute([
+            $id,
+            $data['name'],
+            $slug,
+            $data['url'] ?? null,
+            $data['short_description'] ?? '',
+            $data['description'] ?? null,
+            $data['pricing_model'] ?? 'Free',
+            $data['logo_url'] ?? '',
+            $data['status'] ?? 'inactive'
+        ]);
+
+        if (isset($data['category_id']) && $data['category_id'] !== '') {
+            $stmtCat = $this->pdo->prepare("INSERT INTO tool_category (tool_id, category_id) VALUES (?, ?)");
+            $stmtCat->execute([$id, $data['category_id']]);
+        }
+
+        return $id;
+    }
+
+    public function update(string $id, array $data): void
+    {
+        $fields = [];
+        $params = [];
+        
+        $allowedFields = ['name', 'url', 'short_description', 'description', 'pricing_model', 'logo_url', 'status'];
+        foreach ($allowedFields as $field) {
+            if (array_key_exists($field, $data)) {
+                $fields[] = "$field = ?";
+                $params[] = $data[$field];
+            }
+        }
+        
+        if (isset($data['name'])) {
+            $fields[] = "slug = ?";
+            $params[] = $this->slugify($data['name']);
+        }
+        
+        if (!empty($fields)) {
+            $fieldsStr = implode(', ', $fields);
+            $params[] = $id;
+            $stmt = $this->pdo->prepare("UPDATE tools SET $fieldsStr, updated_at = datetime('now') WHERE id = ?");
+            $stmt->execute($params);
+        }
+
+        if (isset($data['category_id'])) {
+            $stmtDel = $this->pdo->prepare("DELETE FROM tool_category WHERE tool_id = ?");
+            $stmtDel->execute([$id]);
+            
+            if ($data['category_id'] !== '') {
+                $stmtIns = $this->pdo->prepare("INSERT INTO tool_category (tool_id, category_id) VALUES (?, ?)");
+                $stmtIns->execute([$id, $data['category_id']]);
+            }
+        }
+    }
+
+    public function delete(string $id): void
+    {
+        $this->pdo->beginTransaction();
+        try {
+            $this->pdo->prepare("DELETE FROM tool_category WHERE tool_id = ?")->execute([$id]);
+            $this->pdo->prepare("DELETE FROM tool_model WHERE tool_id = ?")->execute([$id]);
+            $this->pdo->prepare("DELETE FROM reviews WHERE tool_id = ?")->execute([$id]);
+            $this->pdo->prepare("DELETE FROM votes WHERE tool_id = ?")->execute([$id]);
+            $this->pdo->prepare("DELETE FROM collection_tools WHERE tool_id = ?")->execute([$id]);
+            $this->pdo->prepare("DELETE FROM reports WHERE tool_id = ?")->execute([$id]);
+            $this->pdo->prepare("DELETE FROM submissions WHERE tool_id = ?")->execute([$id]);
+            $this->pdo->prepare("DELETE FROM tools WHERE id = ?")->execute([$id]);
+            $this->pdo->commit();
+        } catch (\Throwable $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    public function allModels(): array
+    {
+        $stmt = $this->pdo->query("SELECT id, name, creator_id FROM models ORDER BY name");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

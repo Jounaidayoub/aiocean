@@ -31,4 +31,14 @@ final class ReportService
 
         return ['report' => $this->reports->create($toolId, $userId, $reason, $note !== '' ? $note : null)];
     }
+
+    public function listAll(): array
+    {
+        return $this->reports->findAll();
+    }
+
+    public function dismiss(string $id): void
+    {
+        $this->reports->delete($id);
+    }
 }

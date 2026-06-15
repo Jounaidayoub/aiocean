@@ -8,12 +8,13 @@ import type { Tool } from "@/shared/schema"
 import { getTool, recordClick } from "@/shared/api/tools"
 import { toggleVote } from "@/shared/api/votes"
 import { getReviews, type Review } from "@/shared/api/reviews"
-import { ChevronUp, Star, Bookmark, Loader2, ExternalLink } from "lucide-react"
+import { ChevronUp, Star, Bookmark, Loader2, ExternalLink, Flag } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { useNavigate } from "react-router-dom"
 import { SaveToCollectionDialog } from "@/components/SaveToCollectionDialog"
 import { ReviewDialog } from "@/components/ReviewDialog"
 import { ToolLogo } from "@/components/ToolLogo"
+import { ReportToolDialog } from "@/components/ReportToolDialog"
 
 export function ToolDetailPage() {
   const { id } = useParams()
@@ -34,6 +35,7 @@ export function ToolDetailPage() {
 
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false)
+  const [reportDialogOpen, setReportDialogOpen] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -191,6 +193,18 @@ export function ToolDetailPage() {
             <Bookmark className="h-5 w-5" />
             Save
           </Button>
+          <Button
+            size="lg"
+            variant="ghost"
+            className="w-full md:w-auto flex gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            onClick={() => {
+              if (!user) { navigate("/login"); return }
+              setReportDialogOpen(true)
+            }}
+          >
+            <Flag className="h-5 w-5" />
+            Report
+          </Button>
         </div>
       </div>
 
@@ -326,6 +340,13 @@ export function ToolDetailPage() {
         toolId={tool.id}
         toolName={tool.name}
         onSuccess={() => void handleReviewSuccess()}
+      />
+
+      <ReportToolDialog
+        open={reportDialogOpen}
+        onOpenChange={setReportDialogOpen}
+        toolId={tool.id}
+        toolName={tool.name}
       />
     </div>
   )
