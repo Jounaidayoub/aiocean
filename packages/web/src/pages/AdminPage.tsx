@@ -466,35 +466,35 @@ export function AdminPage() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm border-collapse">
                       <thead>
-                        <tr className="border-b text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                          <th className="pb-3 pr-4">Flagged Tool</th>
-                          <th className="pb-3 px-4">Reporter</th>
-                          <th className="pb-3 px-4">Reason</th>
-                          <th className="pb-3 px-4">Details / Notes</th>
-                          <th className="pb-3 pl-4 text-right">Actions</th>
+                        <tr className="bg-muted text-xs font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/80">
+                          <th className="py-2.5 px-3 rounded-l-md">Flagged Tool</th>
+                          <th className="py-2.5 px-3">Reporter</th>
+                          <th className="py-2.5 px-3">Reason</th>
+                          <th className="py-2.5 px-3">Details / Notes</th>
+                          <th className="py-2.5 px-3 text-right rounded-r-md">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y">
+                      <tbody className="divide-y divide-border/40">
                         {reports.map((report) => (
-                          <tr key={report.id} className="hover:bg-muted/10">
-                            <td className="py-4 pr-4 font-semibold text-foreground">
+                          <tr key={report.id} className="hover:bg-muted/50 transition-colors">
+                            <td className="py-2 px-3 font-semibold text-foreground">
                               {report.tool_name || "Unknown Tool"}
                             </td>
-                            <td className="py-4 px-4 text-muted-foreground">
+                            <td className="py-2 px-3 text-muted-foreground">
                               <div className="flex flex-col">
                                 <span className="font-medium text-foreground">{report.user_name}</span>
                                 <span className="text-xs">{report.user_email}</span>
                               </div>
                             </td>
-                            <td className="py-4 px-4">
+                            <td className="py-2 px-3">
                               <Badge variant="outline" className="capitalize">
                                 {report.reason.replace("_", " ")}
                               </Badge>
                             </td>
-                            <td className="py-4 px-4 text-muted-foreground text-xs max-w-xs truncate">
+                            <td className="py-2 px-3 text-muted-foreground text-xs max-w-xs truncate">
                               {report.note || <span className="italic">No details provided</span>}
                             </td>
-                            <td className="py-4 pl-4 text-right flex items-center justify-end gap-1.5">
+                            <td className="py-2 px-3 text-right flex items-center justify-end gap-1.5">
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -597,22 +597,22 @@ export function AdminPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm border-collapse">
                     <thead>
-                      <tr className="border-b text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        <th className="pb-3 pr-4">Tool Name</th>
-                        <th className="pb-3 px-4">Submitter</th>
-                        <th className="pb-3 px-4">Audit Status</th>
-                        <th className="pb-3 px-4">Submitted Date</th>
-                        <th className="pb-3 px-4">Registry Action</th>
-                        <th className="pb-3 pl-4 text-right">Actions</th>
+                      <tr className="bg-muted text-xs font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/80">
+                        <th className="py-2.5 px-3 rounded-l-md">Tool Name</th>
+                        <th className="py-2.5 px-3">Submitter</th>
+                        <th className="py-2.5 px-3">Audit Status</th>
+                        <th className="py-2.5 px-3">Submitted Date</th>
+                        <th className="py-2.5 px-3">Registry Action</th>
+                        <th className="py-2.5 px-3 text-right rounded-r-md">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y">
+                    <tbody className="divide-y divide-border/40">
                       {filteredSubmissions.map((sub) => (
-                        <tr key={sub.id} className="hover:bg-muted/10 group">
-                          <td className="py-4 pr-4 font-semibold text-foreground">
+                        <tr key={sub.id} className="hover:bg-muted/50 transition-colors group">
+                          <td className="py-2 px-3 font-semibold text-foreground">
                             {sub.tool_name}
                           </td>
-                          <td className="py-4 px-4 text-muted-foreground">
+                          <td className="py-2 px-3 text-muted-foreground">
                             <div className="flex flex-col">
                               <span className="font-medium text-foreground">{sub.submitter_name || "Submitter"}</span>
                               <span className="text-xs">{sub.submitter_email}</span>
@@ -708,19 +708,19 @@ export function AdminPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm border-collapse">
                     <thead>
-                      <tr className="border-b text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        <th className="pb-3 pr-4">Name</th>
-                        <th className="pb-3 px-4">Tagline</th>
-                        <th className="pb-3 px-4">Category</th>
-                        <th className="pb-3 px-4">Pricing</th>
-                        <th className="pb-3 px-4">Status</th>
-                        <th className="pb-3 pl-4 text-right">Actions</th>
+                      <tr className="bg-muted text-xs font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/80">
+                        <th className="py-2.5 px-3 rounded-l-md">Name</th>
+                        <th className="py-2.5 px-3">Tagline</th>
+                        <th className="py-2.5 px-3">Category</th>
+                        <th className="py-2.5 px-3">Pricing</th>
+                        <th className="py-2.5 px-3">Status</th>
+                        <th className="py-2.5 px-3 text-right rounded-r-md">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y">
+                    <tbody className="divide-y divide-border/40">
                       {filteredTools.map((t) => (
-                        <tr key={t.id} className="hover:bg-muted/10 group">
-                          <td className="py-4 pr-4 font-semibold text-foreground flex items-center gap-2">
+                        <tr key={t.id} className="hover:bg-muted/50 transition-colors group">
+                          <td className="py-2 px-3 font-semibold text-foreground flex items-center gap-2">
                             {t.logo ? (
                               <img src={t.logo} alt="" className="size-6 rounded object-cover" />
                             ) : (
@@ -730,10 +730,10 @@ export function AdminPage() {
                             )}
                             {t.name}
                           </td>
-                          <td className="py-4 px-4 text-muted-foreground text-xs max-w-xs truncate">
+                          <td className="py-2 px-3 text-muted-foreground text-xs max-w-xs truncate">
                             {t.tagline}
                           </td>
-                          <td className="py-4 px-4">
+                          <td className="py-2 px-3">
                             <Badge variant="secondary" className="text-[10px]">
                               {t.category}
                             </Badge>
@@ -810,17 +810,17 @@ export function AdminPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm border-collapse">
                     <thead>
-                      <tr className="border-b text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        <th className="pb-3 pr-4">User</th>
-                        <th className="pb-3 px-4">Email Address</th>
-                        <th className="pb-3 px-4">System Role</th>
-                        <th className="pb-3 pl-4 text-right">Actions</th>
+                      <tr className="bg-muted text-xs font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/80">
+                        <th className="py-2.5 px-3 rounded-l-md">User</th>
+                        <th className="py-2.5 px-3">Email Address</th>
+                        <th className="py-2.5 px-3">System Role</th>
+                        <th className="py-2.5 px-3 text-right rounded-r-md">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y">
+                    <tbody className="divide-y divide-border/40">
                       {filteredUsers.map((u) => (
-                        <tr key={u.id} className="hover:bg-muted/10">
-                          <td className="py-4 pr-4 font-semibold text-foreground flex items-center gap-2">
+                        <tr key={u.id} className="hover:bg-muted/50 transition-colors">
+                          <td className="py-2.5 px-3 font-semibold text-foreground flex items-center gap-2">
                             {u.pfp_url ? (
                               <img src={u.pfp_url} alt="" className="size-7 rounded-full object-cover" />
                             ) : (
