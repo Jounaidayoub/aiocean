@@ -21,6 +21,10 @@ final class UserService
             return null;
         }
 
+        if (!$user->active) {
+            return null;
+        }
+
         return password_verify($password, $user->pass_hash) ? $user : null;
     }
 

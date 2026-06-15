@@ -12,7 +12,8 @@ final class User
         public string $email,
         public string $pass_hash,
         public string $role = 'user',
-        public ?string $pfp_url = null
+        public ?string $pfp_url = null,
+        public bool $active = true
     ) {}
 
     public function toArray(): array
@@ -23,6 +24,7 @@ final class User
             'email' => $this->email,
             'role' => $this->role,
             'pfp_url' => $this->pfp_url,
+            'active' => $this->active,
         ];
     }
 }

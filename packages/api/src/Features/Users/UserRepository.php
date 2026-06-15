@@ -53,7 +53,8 @@ final class UserRepository implements UserRepositoryInterface
             $row['email'],
             $row['pass_hash'],
             $row['role'],
-            $row['pfp_url'] ?? null
+            $row['pfp_url'] ?? null,
+            isset($row['active']) ? (bool) $row['active'] : true
         );
     }
 
@@ -97,7 +98,7 @@ final class UserRepository implements UserRepositoryInterface
         $fields = [];
         $params = [];
         
-        $allowedFields = ['name', 'email', 'role', 'pfp_url'];
+        $allowedFields = ['name', 'email', 'role', 'pfp_url', 'active'];
         foreach ($allowedFields as $field) {
             if (array_key_exists($field, $data)) {
                 $fields[] = "$field = ?";
@@ -115,22 +116,7 @@ final class UserRepository implements UserRepositoryInterface
 
     public function deleteUser(string $id): void
     {
-        $this->pdo->beginTransaction();
-        try {
-            $this->pdo->prepare("DELETE FROM reviews WHERE user_id = ?")->execute([$id]);
-            $this->pdo->prepare("DELETE FROM votes WHERE user_id = ?")->execute([$id]);
-            $this->pdo->prepare("DELETE FROM reports WHERE user_id = ?")->execute([$id]);
-            $this->pdo->prepare("DELETE FROM password_resets WHERE user_id = ?")->execute([$id]);
-            $this->pdo->prepare("DELETE FROM collections WHERE user_id = ?")->execute([$id]);
-            $this->pdo->prepare("DELETE FROM oauth_auth_codes WHERE user_id = ?")->execute([$id]);
-            $this->pdo->prepare("DELETE FROM oauth_access_tokens WHERE user_id = ?")->execute([$id]);
-            $this->pdo->prepare("DELETE FROM oauth_refresh_tokens WHERE user_id = ?")->execute([$id]);
-            $this->pdo->prepare("DELETE FROM submissions WHERE submitted_by = ?")->execute([$id]);
-            $this->pdo->prepare("DELETE FROM users WHERE id = ?")->execute([$id]);
-            $this->pdo->commit();
-        } catch (\Throwable $e) {
-            $this->pdo->rollBack();
-            throw $e;
-        }
+        $stmt = $this->pdo->prepare("UPDATE users SET active = 0 WHERE id = ?");
+        $stmt->execute([$id]);
     }
 }

@@ -824,6 +824,7 @@ export function AdminPage() {
                         <th className="py-2.5 px-3 rounded-l-md">User</th>
                         <th className="py-2.5 px-3">Email Address</th>
                         <th className="py-2.5 px-3">System Role</th>
+                        <th className="py-2.5 px-3">Status</th>
                         <th className="py-2.5 px-3 text-right rounded-r-md">Actions</th>
                       </tr>
                     </thead>
@@ -853,6 +854,14 @@ export function AdminPage() {
                               {u.role}
                             </Badge>
                           </td>
+                          <td className="py-4 px-4">
+                            <Badge
+                              variant={u.active ? "outline" : "destructive"}
+                              className={u.active ? "bg-emerald-500/10 text-emerald-500 border-emerald-200" : ""}
+                            >
+                              {u.active ? "Active" : "Inactive"}
+                            </Badge>
+                          </td>
                           <td className="py-4 pl-4 text-right flex items-center justify-end gap-1.5">
                             <Button
                               size="sm"
@@ -867,7 +876,7 @@ export function AdminPage() {
                               variant="ghost"
                               className="size-8 p-0 text-destructive hover:bg-destructive/10"
                               onClick={() => setDeletingUserId(u.id)}
-                              disabled={u.id === currentUser?.id}
+                              disabled={u.id === currentUser?.id || !u.active}
                             >
                               <Trash2 className="size-4" />
                             </Button>
@@ -1350,13 +1359,13 @@ export function AdminPage() {
         </DialogContent>
       </Dialog>
 
-      {/* DIALOG 4: CONFIRM DELETE USER */}
+      {/* DIALOG 4: CONFIRM DEACTIVATE USER */}
       <Dialog open={deletingUserId !== null} onOpenChange={(open) => !open && setDeletingUserId(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-destructive">Remove User Account</DialogTitle>
+            <DialogTitle className="text-destructive">Deactivate User Account</DialogTitle>
             <DialogDescription>
-              Warning: This will purge this user account and cascade delete all associated collections, oauth credentials, submissions, reviews, and votes.
+              Warning: This will mark this user account as inactive. The user will be immediately blocked from logging in, but their historical reviews, votes, and submissions will be preserved.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -1364,7 +1373,7 @@ export function AdminPage() {
               Cancel
             </Button>
             <Button variant="destructive" onClick={() => void handleConfirmDeleteUser()}>
-              Confirm Delete User
+              Confirm Deactivate
             </Button>
           </DialogFooter>
         </DialogContent>

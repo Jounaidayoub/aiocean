@@ -90,8 +90,12 @@ final class UserController extends BaseController
 
         $user = $this->userService->getById($_SESSION['user_id']);
 
-        if (!$user) {
-            return $this->json(['error' => 'User not found'], 401);
+        if (!$user || !$user->active) {
+            $_SESSION = [];
+            if (session_id() !== '') {
+                session_destroy();
+            }
+            return $this->json(['error' => 'User not found or inactive'], 401);
         }
 
         return $this->data(['user' => $user->toArray()]);
