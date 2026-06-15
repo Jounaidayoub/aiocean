@@ -51,6 +51,26 @@ import { getAdminReports, dismissAdminReport, type AdminReport } from "@/shared/
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "@/hooks/use-auth"
 
+const getModelProviderName = (modelId: string | undefined, provider: string | undefined) => {
+  if (!modelId) return provider || "openrouter"
+  const cleanProvider = (provider || "openrouter").toLowerCase()
+  if (cleanProvider === "google") return "google"
+  if (cleanProvider === "openai") return "openai"
+  // If openrouter, modelId is like "google/gemini-2.5" or "openai/gpt-4o"
+  if (modelId.includes("/")) {
+    const creator = modelId.split("/")[0].toLowerCase()
+    // clean up creator name, e.g. "meta-llama" -> "meta"
+    if (creator.includes("meta")) return "meta"
+    if (creator.includes("anthropic")) return "anthropic"
+    if (creator.includes("mistral")) return "mistral"
+    if (creator.includes("cohere")) return "cohere"
+    if (creator.includes("nvidia")) return "nvidia"
+    if (creator.includes("microsoft")) return "microsoft"
+    return creator
+  }
+  return cleanProvider
+}
+
 export function AdminPage() {
   const { user: currentUser } = useAuth()
   const navigate = useNavigate()
@@ -382,7 +402,7 @@ export function AdminPage() {
       {/* Title Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-primary to-violet-500 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold tracking-tight">
             System Administration Panel
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -397,20 +417,20 @@ export function AdminPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid grid-cols-2 md:grid-cols-5 h-auto p-1.5 bg-muted/50 border gap-1 rounded-xl">
-          <TabsTrigger value="overview" className="py-2.5 rounded-lg flex items-center gap-2">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 h-auto">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
             <Sliders className="size-4" /> Overview
           </TabsTrigger>
-          <TabsTrigger value="submissions" className="py-2.5 rounded-lg flex items-center gap-2">
+          <TabsTrigger value="submissions" className="flex items-center gap-2">
             <FileText className="size-4" /> Submissions
           </TabsTrigger>
-          <TabsTrigger value="tools" className="py-2.5 rounded-lg flex items-center gap-2">
+          <TabsTrigger value="tools" className="flex items-center gap-2">
             <Sparkles className="size-4" /> Tool Registry
           </TabsTrigger>
-          <TabsTrigger value="users" className="py-2.5 rounded-lg flex items-center gap-2">
+          <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="size-4" /> User Base
           </TabsTrigger>
-          <TabsTrigger value="settings" className="py-2.5 rounded-lg flex items-center gap-2 col-span-2 md:col-span-1">
+          <TabsTrigger value="settings" className="flex items-center gap-2 col-span-2 md:col-span-1">
             <Settings className="size-4" /> Agent Settings
           </TabsTrigger>
         </TabsList>
@@ -418,18 +438,18 @@ export function AdminPage() {
         {/* TAB 1: OVERVIEW */}
         <TabsContent value="overview" className="space-y-6 animate-fade-in">
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-            <StatCard title="Total Registered Users" value={stats.totalUsers} subtitle="All time" icon={<Users className="size-5 text-indigo-500" />} />
-            <StatCard title="Tool Registry Size" value={stats.totalTools} subtitle="Total listings" icon={<Sparkles className="size-5 text-violet-500" />} />
-            <StatCard title="Active Publications" value={stats.activeTools} subtitle={`${((stats.activeTools/stats.totalTools)||0*100).toFixed(0)}% of total`} icon={<CheckCircle className="size-5 text-emerald-500" />} />
-            <StatCard title="Pending Submissions" value={stats.pendingReviews} subtitle="Awaiting audit" icon={<FileText className="size-5 text-amber-500" />} />
-            <StatCard title="Flagged Reports" value={stats.activeReports} subtitle="Requires moderation" icon={<Flag className="size-5 text-rose-500" />} />
+            <StatCard title="Total Registered Users" value={stats.totalUsers} subtitle="All time" icon={<Users className="size-5 text-muted-foreground" />} />
+            <StatCard title="Tool Registry Size" value={stats.totalTools} subtitle="Total listings" icon={<Sparkles className="size-5 text-muted-foreground" />} />
+            <StatCard title="Active Publications" value={stats.activeTools} subtitle={`${((stats.activeTools/stats.totalTools)||0*100).toFixed(0)}% of total`} icon={<CheckCircle className="size-5 text-muted-foreground" />} />
+            <StatCard title="Pending Submissions" value={stats.pendingReviews} subtitle="Awaiting audit" icon={<FileText className="size-5 text-muted-foreground" />} />
+            <StatCard title="Flagged Reports" value={stats.activeReports} subtitle="Requires moderation" icon={<Flag className="size-5 text-muted-foreground" />} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-2 shadow-sm border border-border/75">
               <CardHeader>
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <Flag className="size-4 text-rose-500" /> Flagged & Reported Tools Queue
+                  <Flag className="size-4 text-muted-foreground" /> Flagged & Reported Tools Queue
                 </CardTitle>
                 <CardDescription>
                   List of tools reported by users as spam, duplicate, or broken.
@@ -438,7 +458,7 @@ export function AdminPage() {
               <CardContent>
                 {reports.length === 0 ? (
                   <div className="text-center py-12 border border-dashed rounded-lg">
-                    <CheckCircle className="size-8 mx-auto text-emerald-500 mb-2" />
+                    <CheckCircle className="size-8 mx-auto text-muted-foreground mb-2" />
                     <p className="text-sm font-semibold text-foreground">Clean Moderation Queue</p>
                     <p className="text-xs text-muted-foreground mt-1">No tools are flagged for review at this time.</p>
                   </div>
@@ -467,7 +487,7 @@ export function AdminPage() {
                               </div>
                             </td>
                             <td className="py-4 px-4">
-                              <Badge variant="outline" className="text-rose-500 border-rose-200 bg-rose-50/50 capitalize">
+                              <Badge variant="outline" className="capitalize">
                                 {report.reason.replace("_", " ")}
                               </Badge>
                             </td>
@@ -854,10 +874,10 @@ export function AdminPage() {
 
         {/* TAB 5: AGENT SETTINGS */}
         <TabsContent value="settings" className="animate-fade-in">
-          <Card className="shadow-sm border border-border/75 max-w-3xl mx-auto">
+          <Card className="shadow-sm border border-border/75">
             <CardHeader>
               <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <Sparkles className="size-5 text-indigo-500" /> AI Reviewer Agent Configuration
+                <Sparkles className="size-5 text-muted-foreground" /> AI Reviewer Agent Configuration
               </CardTitle>
               <CardDescription>
                 Customize how the automated review agent is powered, select LLM parameters, and override prompt instructions.
@@ -865,165 +885,240 @@ export function AdminPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSaveSettings} className="space-y-6">
-                
-                {/* 1. Provider Select */}
-                <div className="space-y-2">
-                  <Label htmlFor="agent_provider">LLM Integration Provider</Label>
-                  <Select
-                    value={settings.agent_provider || "openrouter"}
-                    onValueChange={(val) => {
-                      const providerValue = val || "openrouter";
-                      setSettings((prev) => ({
-                        ...prev,
-                        agent_provider: providerValue,
-                        // reset model to default of that provider
-                        agent_model: providerValue === "google" ? "gemini-1.5-flash" : providerValue === "openai" ? "gpt-4o-mini" : "nvidia/nemotron-3-super-120b-a12b:free"
-                      }))
-                    }}
-                  >
-                    <SelectTrigger id="agent_provider" className="w-full">
-                      <SelectValue placeholder="Select LLM Provider" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="openrouter">OpenRouter API</SelectItem>
-                      <SelectItem value="google">Google Gemini SDK</SelectItem>
-                      <SelectItem value="openai">OpenAI SDK</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Define the SDK client initialized for running agent verification loops.
-                  </p>
-                </div>
-
-                {/* 2. Model Selection */}
-                <div className="space-y-2">
-                  <Label htmlFor="agent_model">Provider Model Selection</Label>
-                  <div className="flex gap-2">
-                    <div className="flex-1">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                  {/* Left Column: Model and Parameters */}
+                  <div className="space-y-6">
+                    {/* 1. Provider Select */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="agent_provider">LLM Integration Provider</Label>
+                        <img
+                          src={`https://models.dev/logos/${(settings.agent_provider || "openrouter").toLowerCase()}.svg`}
+                          alt=""
+                          className="h-4.5 object-contain shrink-0"
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
+                      </div>
                       <Select
-                        value={settings.agent_model || ""}
-                        onValueChange={(val) => setSettings((prev) => ({ ...prev, agent_model: val || "" }))}
+                        value={settings.agent_provider || "openrouter"}
+                        onValueChange={(val) => {
+                          const providerValue = val || "openrouter";
+                          setSettings((prev) => ({
+                            ...prev,
+                            agent_provider: providerValue,
+                            // reset model to default of that provider
+                            agent_model: providerValue === "google" ? "gemini-1.5-flash" : providerValue === "openai" ? "gpt-4o-mini" : "nvidia/nemotron-3-super-120b-a12b:free"
+                          }))
+                        }}
                       >
-                        <SelectTrigger id="agent_model" className="w-full font-mono text-xs">
-                          <SelectValue placeholder="Select Model ID" />
+                        <SelectTrigger id="agent_provider" className="w-full">
+                          <SelectValue placeholder="Select LLM Provider" />
                         </SelectTrigger>
                         <SelectContent>
-                          {filteredModelsForProvider.map((m) => (
-                            <SelectItem key={m.id} value={m.id} className="font-mono text-xs">
-                              {m.name} ({m.id})
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="openrouter">
+                            <div className="flex items-center gap-2">
+                              <img
+                                src="https://models.dev/logos/openrouter.svg"
+                                alt=""
+                                className="size-4 object-contain shrink-0"
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                              />
+                              <span>OpenRouter API</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="google">
+                            <div className="flex items-center gap-2">
+                              <img
+                                src="https://models.dev/logos/google.svg"
+                                alt=""
+                                className="size-4 object-contain shrink-0"
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                              />
+                              <span>Google Gemini SDK</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="openai">
+                            <div className="flex items-center gap-2">
+                              <img
+                                src="https://models.dev/logos/openai.svg"
+                                alt=""
+                                className="size-4 object-contain shrink-0"
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                              />
+                              <span>OpenAI SDK</span>
+                            </div>
+                          </SelectItem>
                         </SelectContent>
                       </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Define the SDK client initialized for running agent verification loops.
+                      </p>
                     </div>
-                    <div className="w-1/3">
+
+                    {/* 2. Model Selection */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="agent_model">Provider Model Selection</Label>
+                        {settings.agent_model && (
+                          <img
+                            src={`https://models.dev/logos/${getModelProviderName(settings.agent_model, settings.agent_provider).toLowerCase()}.svg`}
+                            alt=""
+                            className="h-4.5 object-contain shrink-0"
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                          />
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <Select
+                            value={settings.agent_model || ""}
+                            onValueChange={(val) => setSettings((prev) => ({ ...prev, agent_model: val || "" }))}
+                          >
+                            <SelectTrigger id="agent_model" className="w-full font-mono text-xs">
+                              <SelectValue placeholder="Select Model ID" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {filteredModelsForProvider.map((m) => {
+                                const creator = getModelProviderName(m.id, settings.agent_provider)
+                                return (
+                                  <SelectItem key={m.id} value={m.id} className="font-mono text-xs">
+                                    <div className="flex items-center gap-2">
+                                      <img
+                                        src={`https://models.dev/logos/${creator.toLowerCase()}.svg`}
+                                        alt=""
+                                        className="size-3.5 object-contain shrink-0"
+                                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                      />
+                                      <span>{m.name} ({m.id})</span>
+                                    </div>
+                                  </SelectItem>
+                                )
+                              })}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="w-1/3">
+                          <Input
+                            placeholder="Or custom ID string..."
+                            value={settings.agent_model || ""}
+                            onChange={(e) => setSettings((prev) => ({ ...prev, agent_model: e.target.value }))}
+                            className="font-mono text-xs"
+                          />
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Select from cached `models.dev` catalog matching the provider, or write a custom model identifier.
+                      </p>
+                    </div>
+
+                    {/* 3. Temperature Selection */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <Label htmlFor="agent_temperature">Model Temperature</Label>
+                        <span className="text-xs font-semibold font-mono text-muted-foreground">{settings.agent_temperature || "0.0"}</span>
+                      </div>
                       <Input
-                        placeholder="Or custom ID string..."
-                        value={settings.agent_model || ""}
-                        onChange={(e) => setSettings((prev) => ({ ...prev, agent_model: e.target.value }))}
-                        className="font-mono text-xs"
+                        id="agent_temperature"
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        value={settings.agent_temperature || "0.0"}
+                        onChange={(e) => setSettings((prev) => ({ ...prev, agent_temperature: e.target.value }))}
+                        className="h-8 cursor-pointer"
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Lower values (e.g. 0.0) lead to deterministic fact-checking. Higher values allow creative suggestions.
+                      </p>
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Select from cached `models.dev` catalog matching the provider, or write a custom model identifier.
-                  </p>
-                </div>
 
-                {/* 3. API Keys Override */}
-                <div className="space-y-4 border p-4 rounded-lg bg-muted/20">
-                  <div className="flex items-center justify-between">
-                    <Label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      <Lock className="size-3.5" /> API Keys Configuration Override
-                    </Label>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowApiKeys(!showApiKeys)}
-                      className="h-7 text-[10px]"
-                    >
-                      {showApiKeys ? <><EyeOff className="size-3 mr-1" /> Obscure</> : <><Eye className="size-3 mr-1" /> Reveal Keys</>}
-                    </Button>
-                  </div>
+                  {/* Right Column: Secrets and Prompts */}
+                  <div className="space-y-6">
+                    {/* 4. API Keys Override */}
+                    <div className="space-y-4 border p-4 rounded-lg bg-muted/20">
+                      <div className="flex items-center justify-between">
+                        <Label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          <Lock className="size-3.5" /> API Keys Configuration Override
+                        </Label>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowApiKeys(!showApiKeys)}
+                          className="h-7 text-[10px]"
+                        >
+                          {showApiKeys ? <><EyeOff className="size-3 mr-1" /> Obscure</> : <><Eye className="size-3 mr-1" /> Reveal Keys</>}
+                        </Button>
+                      </div>
 
-                  <div className="space-y-3">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="openrouter_api_key" className="text-xs">OpenRouter API Key Override</Label>
-                      <Input
-                        id="openrouter_api_key"
-                        type={showApiKeys ? "text" : "password"}
-                        placeholder={settings.openrouter_api_key ? "••••••••••••••••••••••••" : "Falls back to server .env config"}
-                        value={settings.openrouter_api_key || ""}
-                        onChange={(e) => setSettings((prev) => ({ ...prev, openrouter_api_key: e.target.value }))}
-                        className="h-9 text-xs"
-                      />
+                      <div className="space-y-3">
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="openrouter_api_key" className="text-xs">OpenRouter API Key Override</Label>
+                            <img src="https://models.dev/logos/openrouter.svg" alt="" className="h-3.5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                          </div>
+                          <Input
+                            id="openrouter_api_key"
+                            type={showApiKeys ? "text" : "password"}
+                            placeholder={settings.openrouter_api_key ? "••••••••••••••••••••••••" : "Falls back to server .env config"}
+                            value={settings.openrouter_api_key || ""}
+                            onChange={(e) => setSettings((prev) => ({ ...prev, openrouter_api_key: e.target.value }))}
+                            className="h-9 text-xs"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="google_api_key" className="text-xs">Google Gemini API Key Override</Label>
+                            <img src="https://models.dev/logos/google.svg" alt="" className="h-3.5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                          </div>
+                          <Input
+                            id="google_api_key"
+                            type={showApiKeys ? "text" : "password"}
+                            placeholder={settings.google_api_key ? "••••••••••••••••••••••••" : "Falls back to server .env config"}
+                            value={settings.google_api_key || ""}
+                            onChange={(e) => setSettings((prev) => ({ ...prev, google_api_key: e.target.value }))}
+                            className="h-9 text-xs"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="openai_api_key" className="text-xs">OpenAI API Key Override</Label>
+                            <img src="https://models.dev/logos/openai.svg" alt="" className="h-3.5 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                          </div>
+                          <Input
+                            id="openai_api_key"
+                            type={showApiKeys ? "text" : "password"}
+                            placeholder={settings.openai_api_key ? "••••••••••••••••••••••••" : "Falls back to server .env config"}
+                            value={settings.openai_api_key || ""}
+                            onChange={(e) => setSettings((prev) => ({ ...prev, openai_api_key: e.target.value }))}
+                            className="h-9 text-xs"
+                          />
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground italic">
+                        For security, keys stored in the database override server .env variables. Leave blank to keep using env settings.
+                      </p>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <Label htmlFor="google_api_key" className="text-xs">Google Gemini API Key Override</Label>
-                      <Input
-                        id="google_api_key"
-                        type={showApiKeys ? "text" : "password"}
-                        placeholder={settings.google_api_key ? "••••••••••••••••••••••••" : "Falls back to server .env config"}
-                        value={settings.google_api_key || ""}
-                        onChange={(e) => setSettings((prev) => ({ ...prev, google_api_key: e.target.value }))}
-                        className="h-9 text-xs"
+                    {/* 5. Prompt customization */}
+                    <div className="space-y-2">
+                      <Label htmlFor="agent_system_prompt">Reviewer System Prompt Override</Label>
+                      <Textarea
+                        id="agent_system_prompt"
+                        placeholder="Describe how the AI should verify submissions, check links, evaluate taglines, etc..."
+                        value={settings.agent_system_prompt || ""}
+                        onChange={(e) => setSettings((prev) => ({ ...prev, agent_system_prompt: e.target.value }))}
+                        rows={8}
+                        className="font-mono text-xs leading-relaxed"
                       />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label htmlFor="openai_api_key" className="text-xs">OpenAI API Key Override</Label>
-                      <Input
-                        id="openai_api_key"
-                        type={showApiKeys ? "text" : "password"}
-                        placeholder={settings.openai_api_key ? "••••••••••••••••••••••••" : "Falls back to server .env config"}
-                        value={settings.openai_api_key || ""}
-                        onChange={(e) => setSettings((prev) => ({ ...prev, openai_api_key: e.target.value }))}
-                        className="h-9 text-xs"
-                      />
+                      <p className="text-xs text-muted-foreground">
+                        Custom instructions template governing the AI review behavior. Leave blank to use defaults.
+                      </p>
                     </div>
                   </div>
-                  <p className="text-[10px] text-muted-foreground italic">
-                    For security, keys stored in the database override server .env variables. Leave blank to keep using env settings.
-                  </p>
-                </div>
-
-                {/* 4. Temperature Selection */}
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <Label htmlFor="agent_temperature">Model Temperature</Label>
-                    <span className="text-xs font-semibold font-mono text-primary">{settings.agent_temperature || "0.0"}</span>
-                  </div>
-                  <Input
-                    id="agent_temperature"
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.1"
-                    value={settings.agent_temperature || "0.0"}
-                    onChange={(e) => setSettings((prev) => ({ ...prev, agent_temperature: e.target.value }))}
-                    className="h-8 cursor-pointer"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Lower values (e.g. 0.0) lead to deterministic fact-checking. Higher values allow creative suggestions.
-                  </p>
-                </div>
-
-                {/* 5. Prompt customization */}
-                <div className="space-y-2">
-                  <Label htmlFor="agent_system_prompt">Reviewer System Prompt Override</Label>
-                  <Textarea
-                    id="agent_system_prompt"
-                    placeholder="Describe how the AI should verify submissions, check links, evaluate taglines, etc..."
-                    value={settings.agent_system_prompt || ""}
-                    onChange={(e) => setSettings((prev) => ({ ...prev, agent_system_prompt: e.target.value }))}
-                    rows={8}
-                    className="font-mono text-xs leading-relaxed"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Custom instructions template governing the AI review behavior. Leave blank to use defaults.
-                  </p>
                 </div>
 
                 <DialogFooter className="pt-4 border-t">
@@ -1176,11 +1271,27 @@ export function AdminPage() {
           <DialogHeader>
             <DialogTitle>Edit User Profile Permissions</DialogTitle>
             <DialogDescription>
-              Assign roles for account {editingUser?.name}.
+              Assign roles for account.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleUserSubmit} className="space-y-4">
+            {editingUser && (
+              <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/20">
+                {editingUser.pfp_url ? (
+                  <img src={editingUser.pfp_url} alt="" className="size-10 rounded-full object-cover" />
+                ) : (
+                  <div className="size-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
+                    {editingUser.name?.[0]?.toUpperCase() || "U"}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-foreground truncate">{editingUser.name}</div>
+                  <div className="text-xs text-muted-foreground truncate">{editingUser.email}</div>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="user-role">System Role</Label>
               <Select
