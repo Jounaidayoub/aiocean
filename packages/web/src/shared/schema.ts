@@ -1,6 +1,7 @@
 export interface Tool {
   id: string
   name: string
+  slug?: string | null
   logo: string
   tagline: string
   category: string

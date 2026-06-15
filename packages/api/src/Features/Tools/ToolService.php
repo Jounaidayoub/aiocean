@@ -52,6 +52,9 @@ final class ToolService
     public function getById(string $id): ?array
     {
         $tool = $this->repository->findById($id);
+        if ($tool === null) {
+            $tool = $this->repository->findBySlug($id);
+        }
         return $tool?->toArray();
     }
 

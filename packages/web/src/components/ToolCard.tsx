@@ -35,7 +35,7 @@ export function ToolCard({ tool }: ToolCardProps) {
   }
 
   return (
-    <Link to={`/tools/${tool.id}`} className="block h-full transition-transform hover:-translate-y-1">
+    <Link to={`/tools/${tool.slug || tool.id}`} className="block h-full transition-transform hover:-translate-y-1">
       <Card className="flex h-full cursor-pointer flex-col overflow-hidden transition-shadow hover:shadow-md">
         <CardHeader className="pb-4">
           <div className="flex items-start justify-between">

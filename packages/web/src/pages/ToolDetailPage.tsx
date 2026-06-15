@@ -8,13 +8,22 @@ import type { Tool } from "@/shared/schema"
 import { getTool, recordClick } from "@/shared/api/tools"
 import { toggleVote } from "@/shared/api/votes"
 import { getReviews, type Review } from "@/shared/api/reviews"
-import { ChevronUp, Star, Bookmark, Loader2, ExternalLink, Flag } from "lucide-react"
+import { ChevronUp, ChevronDown, Star, Bookmark, Loader2, ExternalLink, Flag } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { useNavigate } from "react-router-dom"
 import { SaveToCollectionDialog } from "@/components/SaveToCollectionDialog"
 import { ReviewDialog } from "@/components/ReviewDialog"
 import { ToolLogo } from "@/components/ToolLogo"
 import { ReportToolDialog } from "@/components/ReportToolDialog"
+
+import {
+  OpenIn,
+  OpenInChatGPT,
+  OpenInClaude,
+  OpenInContent,
+  OpenInTrigger,
+  OpenInGoogle,
+} from "@/components/ai-elements/open-in-chat";
 
 export function ToolDetailPage() {
   const { id } = useParams()
@@ -63,13 +72,14 @@ export function ToolDetailPage() {
   }, [id])
 
   useEffect(() => {
-    if (!id) return
+    if (!tool?.id) return
+    const toolId = tool.id
     let cancelled = false
 
     async function load() {
       setLoadingReviews(true)
       try {
-        const r = await getReviews(id!)
+        const r = await getReviews(toolId)
         if (!cancelled) setReviews(r)
       } catch {
         // ignore
@@ -80,7 +90,7 @@ export function ToolDetailPage() {
 
     load()
     return () => { cancelled = true }
-  }, [id])
+  }, [tool?.id])
 
   const handleVisitWebsite = () => {
     if (!tool?.url) return
@@ -88,7 +98,7 @@ export function ToolDetailPage() {
     if (!user) return
     recordClick(tool.id)
       .then((result) => setUsageCount(result.count))
-      .catch(() => {})
+      .catch(() => { })
   }
 
   const handleUpvote = async () => {
@@ -96,10 +106,10 @@ export function ToolDetailPage() {
       navigate("/login")
       return
     }
-    if (!id || voting) return
+    if (!tool?.id || voting) return
     setVoting(true)
     try {
-      const result = await toggleVote(id)
+      const result = await toggleVote(tool.id)
       setHasUpvoted(result.voted)
       setVoteCount(result.count)
     } catch {
@@ -110,9 +120,9 @@ export function ToolDetailPage() {
   }
 
   const handleReviewSuccess = async () => {
-    if (!id) return
+    if (!tool?.id) return
     try {
-      const [r, t] = await Promise.all([getReviews(id), getTool(id)])
+      const [r, t] = await Promise.all([getReviews(tool.id), getTool(tool.id)])
       setReviews(r)
       setTool(t)
     } catch {
@@ -142,6 +152,23 @@ export function ToolDetailPage() {
     return num >= 1000 ? `${(num / 1000).toFixed(1)}k` : num.toString()
   }
 
+  const queryParts = [
+    `I want to learn about "${tool.name}"`,
+    tool.tagline ? ` — ${tool.tagline}.` : '.',
+    '\n\nHere is what I know so far:',
+    `\n- Name: ${tool.name}`,
+    tool.url ? `\n- Website: ${tool.url}` : '',
+    tool.category ? `\n- Category: ${tool.category}` : '',
+    tool.pricing ? `\n- Pricing: ${tool.pricing}` : '',
+    tool.platform ? `\n- Platform: ${tool.platform}` : '',
+    tool.primaryUseCase ? `\n- Best for: ${tool.primaryUseCase}` : '',
+    tool.rating > 0 ? `\n- Community rating: ${tool.rating.toFixed(1)}/5 (${tool.reviewCount} reviews)` : '',
+    tool.description ? `\n\nDescription from the listing:\n${tool.description}` : '',
+    tool.url ? `\n\nPlease also visit their website at ${tool.url} for the latest information.` : '',
+    '\n\nBased on this, give me a comprehensive overview: key features, pros/cons, pricing details, and who this tool is best suited for. Compare it to popular alternatives if possible.',
+  ]
+  const sampleQuery = queryParts.join('')
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Header Section */}
@@ -159,21 +186,21 @@ export function ToolDetailPage() {
           </div>
         </div>
 
-        <div className="flex shrink-0 flex-col gap-3 sm:flex-row md:flex-col">
+        <div className="flex shrink-0 flex-col gap-3">
           {tool.url && (
             <Button
               size="lg"
-              className="w-full md:w-auto font-semibold"
+              className="w-full md:w-auto flex gap-2 justify-center items-center font-semibold"
               onClick={() => void handleVisitWebsite()}
             >
-              <ExternalLink className="mr-2 size-4" />
-              Visit Website
+              <ExternalLink className="h-5 w-5" />
+              <span>Visit Website</span>
             </Button>
           )}
           <Button
             size="lg"
             variant={hasUpvoted ? "default" : "secondary"}
-            className="w-full md:w-auto flex gap-2"
+            className="w-full md:w-auto flex gap-2 justify-center items-center font-semibold"
             onClick={() => void handleUpvote()}
             disabled={voting}
           >
@@ -181,29 +208,53 @@ export function ToolDetailPage() {
             <span>{hasUpvoted ? "Upvoted" : "Upvote"}</span>
             <span className="opacity-70">({voteCount})</span>
           </Button>
+          <div className="flex gap-3 w-full md:w-auto">
+            <Button
+              size="lg"
+              variant="outline"
+              className="flex-1 flex gap-2 justify-center items-center font-semibold"
+              onClick={() => {
+                if (!user) { navigate("/login"); return }
+                setSaveDialogOpen(true)
+              }}
+            >
+              <Bookmark className="h-5 w-5" />
+              <span>Save</span>
+            </Button>
+            <div className="flex-1 min-w-0">
+              <OpenIn query={sampleQuery}>
+                <OpenInTrigger
+                  render={
+                    <Button
+                      type="button"
+                      size="lg"
+                      variant="outline"
+                      className="w-full flex gap-2 justify-center items-center font-semibold"
+                    />
+                  }
+                >
+                  <span>Ask AI</span>
+                  <ChevronDown className="h-5 w-5 opacity-70" />
+                </OpenInTrigger>
+                <OpenInContent>
+                  <OpenInChatGPT  />
+                  <OpenInClaude />
+                  <OpenInGoogle />
+                </OpenInContent>
+              </OpenIn>
+            </div>
+          </div>
           <Button
             size="lg"
-            variant="outline"
-            className="w-full md:w-auto flex gap-2"
-            onClick={() => {
-              if (!user) { navigate("/login"); return }
-              setSaveDialogOpen(true)
-            }}
-          >
-            <Bookmark className="h-5 w-5" />
-            Save
-          </Button>
-          <Button
-            size="lg"
-            variant="ghost"
-            className="w-full md:w-auto flex gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            variant="destructive"
+            className="w-full md:w-auto flex gap-2 justify-center items-center font-semibold"
             onClick={() => {
               if (!user) { navigate("/login"); return }
               setReportDialogOpen(true)
             }}
           >
             <Flag className="h-5 w-5" />
-            Report
+            <span>Report Tool</span>
           </Button>
         </div>
       </div>
@@ -265,9 +316,8 @@ export function ToolDetailPage() {
                           {[1, 2, 3, 4, 5].map((star) => (
                             <Star
                               key={star}
-                              className={`h-4 w-4 ${
-                                star <= review.rating ? "fill-current" : "text-muted-foreground/30"
-                              }`}
+                              className={`h-4 w-4 ${star <= review.rating ? "fill-current" : "text-muted-foreground/30"
+                                }`}
                             />
                           ))}
                         </div>
@@ -290,38 +340,38 @@ export function ToolDetailPage() {
               <CardTitle className="text-base font-semibold">Stats</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-               <div className="flex justify-between items-center">
-                 <span className="text-sm text-muted-foreground">Community rating</span>
-                 <span className="font-semibold flex items-center gap-1.5">
-                   {tool.rating.toFixed(1)} <Star className="h-4 w-4 fill-amber-400 text-amber-500" />
-                 </span>
-               </div>
-               {tool.externalRating != null && (
-                 <div className="flex justify-between items-center">
-                   <span className="text-sm text-muted-foreground">
-                     Official rating{tool.externalRatingSource ? ` · ${tool.externalRatingSource}` : ""}
-                   </span>
-                   <span className="font-semibold flex items-center gap-1.5">
-                     {tool.externalRating.toFixed(1)} <Star className="h-4 w-4 fill-sky-400 text-sky-500" />
-                   </span>
-                 </div>
-               )}
-               <div className="flex justify-between items-center">
-                 <span className="text-sm text-muted-foreground">Reviews</span>
-                 <span className="font-semibold">{tool.reviewCount}</span>
-               </div>
-               <div className="flex justify-between items-center">
-                 <span className="text-sm text-muted-foreground">Upvotes</span>
-                 <span className="font-semibold">{voteCount}</span>
-               </div>
-               <div className="flex justify-between items-center">
-                 <span className="text-sm text-muted-foreground">Users</span>
-                  <span className="font-semibold">{formatCount(usageCount)}</span>
-               </div>
-               <div className="flex justify-between items-center">
-                 <span className="text-sm text-muted-foreground">Pricing</span>
-                 <span className="font-semibold">{tool.pricing}</span>
-               </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Community rating</span>
+                <span className="font-semibold flex items-center gap-1.5">
+                  {tool.rating.toFixed(1)} <Star className="h-4 w-4 fill-amber-400 text-amber-500" />
+                </span>
+              </div>
+              {tool.externalRating != null && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">
+                    Official rating{tool.externalRatingSource ? ` · ${tool.externalRatingSource}` : ""}
+                  </span>
+                  <span className="font-semibold flex items-center gap-1.5">
+                    {tool.externalRating.toFixed(1)} <Star className="h-4 w-4 fill-sky-400 text-sky-500" />
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Reviews</span>
+                <span className="font-semibold">{tool.reviewCount}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Upvotes</span>
+                <span className="font-semibold">{voteCount}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Users</span>
+                <span className="font-semibold">{formatCount(usageCount)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Pricing</span>
+                <span className="font-semibold">{tool.pricing}</span>
+              </div>
             </CardContent>
           </Card>
         </div>

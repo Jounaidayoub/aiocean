@@ -71,7 +71,7 @@ export function CollectionToolsDialog({ open, onOpenChange, collection }: Collec
               <div
                 key={tool.id}
                 className="flex items-center gap-3 rounded-lg border px-3 py-2.5 cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => { onOpenChange(false); navigate(`/tools/${tool.id}`) }}
+                onClick={() => { onOpenChange(false); navigate(`/tools/${tool.slug || tool.id}`) }}
               >
                 <div className="flex size-9 items-center justify-center rounded-md border bg-muted text-base shrink-0">
                   {tool.logo}

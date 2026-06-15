@@ -61,6 +61,30 @@ final class ToolRepository implements ToolRepositoryInterface, ToolLookupInterfa
         return $row ? $this->hydrate($row) : null;
     }
 
+    public function findBySlug(string $slug): ?Tool
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT t.*,
+                   GROUP_CONCAT(c.name) AS categories,
+                   COALESCE(AVG(r.rating), 0) AS avg_rating,
+                   COUNT(DISTINCT r.id)        AS review_count,
+                   COUNT(DISTINCT v.id)        AS vote_count,
+                   COUNT(DISTINCT tcl.user_id) AS click_count
+            FROM tools t
+            LEFT JOIN tool_category tc ON tc.tool_id = t.id
+            LEFT JOIN categories c     ON c.id = tc.category_id
+            LEFT JOIN reviews r        ON r.tool_id = t.id
+            LEFT JOIN votes v          ON v.tool_id = t.id
+            LEFT JOIN tool_clicks tcl  ON tcl.tool_id = t.id
+            WHERE t.slug = ? AND t.status = 'active'
+            GROUP BY t.id
+        ");
+        $stmt->execute([$slug]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row ? $this->hydrate($row) : null;
+    }
+
     public function exists(string $id): bool
     {
         $stmt = $this->pdo->prepare('SELECT 1 FROM tools WHERE id = ?');
@@ -168,9 +192,10 @@ final class ToolRepository implements ToolRepositoryInterface, ToolLookupInterfa
             platform:       'Web',
             usageCount:     (int) ($row['click_count'] ?? $row['usage_count'] ?? 0),
             rating:         round((float) ($row['avg_rating'] ?? 0), 1),
+            primaryUseCase: '',
             reviewCount:    (int) ($row['review_count'] ?? 0),
             voteCount:      (int) ($row['vote_count'] ?? 0),
-            primaryUseCase: '',
+            slug:           $row['slug'] ?? null,
             url:            $row['url'] ?? null,
             description:    $row['description'] ?? null,
             status:         $row['status'] ?? 'inactive',
@@ -211,10 +236,36 @@ final class ToolRepository implements ToolRepositoryInterface, ToolLookupInterfa
         return strtolower(trim((string) preg_replace('/[^a-z0-9-]+/', '-', strtolower($s)), '-'));
     }
 
+    /**
+     * Generate a unique slug, appending -2, -3, etc. if another tool (excluding $excludeId) already has the same slug.
+     */
+    private function uniqueSlug(string $name, ?string $excludeId = null): string
+    {
+        $base = $this->slugify($name);
+        $slug = $base;
+        $suffix = 1;
+
+        while (true) {
+            $sql = "SELECT COUNT(*) FROM tools WHERE slug = ?";
+            $params = [$slug];
+            if ($excludeId !== null) {
+                $sql .= " AND id != ?";
+                $params[] = $excludeId;
+            }
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+            if ((int) $stmt->fetchColumn() === 0) {
+                return $slug;
+            }
+            $suffix++;
+            $slug = "$base-$suffix";
+        }
+    }
+
     public function create(array $data): string
     {
         $id = bin2hex(random_bytes(16));
-        $slug = $this->slugify($data['name']);
+        $slug = $this->uniqueSlug($data['name']);
         
         $stmt = $this->pdo->prepare("
             INSERT INTO tools (id, name, slug, url, short_description, description, pricing_model, logo_url, status)
@@ -253,9 +304,17 @@ final class ToolRepository implements ToolRepositoryInterface, ToolLookupInterfa
             }
         }
         
+        // Only regenerate slug if name is being changed
         if (isset($data['name'])) {
-            $fields[] = "slug = ?";
-            $params[] = $this->slugify($data['name']);
+            // Fetch the current name to see if it actually changed
+            $current = $this->pdo->prepare("SELECT name FROM tools WHERE id = ?");
+            $current->execute([$id]);
+            $currentName = $current->fetchColumn();
+            
+            if ($currentName !== $data['name']) {
+                $fields[] = "slug = ?";
+                $params[] = $this->uniqueSlug($data['name'], $id);
+            }
         }
         
         if (!empty($fields)) {

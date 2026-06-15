@@ -24,6 +24,7 @@ final class Tool
         public readonly string $primaryUseCase,
         public readonly int    $reviewCount = 0,
         public readonly int    $voteCount = 0,
+        public readonly ?string $slug = null,
         public readonly ?string $url = null,
         public readonly ?string $description = null,
         public readonly string $status = 'active',
@@ -37,6 +38,7 @@ final class Tool
         return [
             'id'            => $this->id,
             'name'          => $this->name,
+            'slug'          => $this->slug,
             'logo'          => $this->logo,
             'tagline'       => $this->tagline,
             'category'      => $this->category,
