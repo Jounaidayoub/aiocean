@@ -8,20 +8,20 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Soft ice-blue tinted background */
-  --background: #f1f6fa;
+  /* Soft cool-slate tinted background */
+  --background: #edf3f8;
   --foreground: #1c2635;
   
-  /* Cohesive ice-blue cards to avoid harsh all-white look */
-  --card: #ffffff;
+  /* Ice-white cards, sidebars, and popovers - completely purging pure #ffffff */
+  --card: #f7fafc;
   --card-foreground: #1c2635;
   
-  --popover: #ffffff;
+  --popover: #f7fafc;
   --popover-foreground: #1c2635;
   
-  /* New palette: 1591DC (primary) and 2C5EAD (dark/active) */
+  /* Core brand palette: 1591DC (primary) and 2C5EAD (dark/active) */
   --primary: #1591DC;
-  --primary-foreground: #ffffff;
+  --primary-foreground: #f7fafc;
   
   /* Secondary is C4E2F5 */
   --secondary: #c4e2f5;
@@ -35,7 +35,7 @@
   
   --destructive: oklch(0.577 0.245 27.325);
   
-  /* Ice blue border lines */
+  /* Themed cool blue borders */
   --border: #d2e3f0;
   --input: #d2e3f0;
   
@@ -49,10 +49,10 @@
   
   --radius: 0.375rem;
   
-  --sidebar: #ffffff;
+  --sidebar: #f7fafc;
   --sidebar-foreground: #1c2635;
   --sidebar-primary: #1591DC;
-  --sidebar-primary-foreground: #ffffff;
+  --sidebar-primary-foreground: #f7fafc;
   --sidebar-accent: #c4e2f5;
   --sidebar-accent-foreground: #2c5ead;
   --sidebar-border: #d2e3f0;
