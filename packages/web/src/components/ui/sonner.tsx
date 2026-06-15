@@ -36,15 +36,15 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--info-bg": "color-mix(in oklab, var(--card) 86%, #0ea5e9 14%)",
           "--info-text": "var(--card-foreground)",
           "--info-border": "color-mix(in oklab, var(--border) 55%, #0ea5e9 45%)",
-          "--border-radius": "12px",
+          "--border-radius": "var(--radius)",
         } as CSSProperties
       }
       toastOptions={{
         classNames: {
           toast:
-            "group toast group-[.toaster]:border group-[.toaster]:shadow-lg group-[.toaster]:backdrop-blur-sm group-[.toaster]:rounded-xl",
-          title: "text-sm font-semibold tracking-tight",
-          description: "text-sm text-muted-foreground",
+            "group toast group-[.toaster]:border group-[.toaster]:rounded-md",
+          title: "text-xs font-semibold tracking-tight",
+          description: "text-[11px] text-muted-foreground",
           actionButton:
             "!bg-primary !text-primary-foreground hover:!bg-primary/90 !rounded-md !px-3 !h-8 !text-xs !font-semibold",
           cancelButton:
