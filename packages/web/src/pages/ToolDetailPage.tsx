@@ -1,4 +1,6 @@
 import { useParams } from "react-router-dom"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -267,9 +269,46 @@ export function ToolDetailPage() {
         <div className="md:col-span-2 space-y-8">
           <section>
             <h2 className="text-xl font-semibold mb-4">About</h2>
-            <p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">
-              {tool.description || tool.tagline || "No description available."}
-            </p>
+            <div className="text-muted-foreground">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  h1: ({ children }) => <h1 className="mb-3 mt-6 text-lg font-bold text-foreground">{children}</h1>,
+                  h2: ({ children }) => <h2 className="mb-2 mt-5 text-base font-semibold text-foreground">{children}</h2>,
+                  h3: ({ children }) => <h3 className="mb-1.5 mt-4 text-sm font-semibold text-foreground">{children}</h3>,
+                  p: ({ children }) => <p className="mb-3 leading-relaxed">{children}</p>,
+                  ul: ({ children }) => <ul className="mb-3 list-disc space-y-1.5 pl-5">{children}</ul>,
+                  ol: ({ children }) => <ol className="mb-3 list-decimal space-y-1.5 pl-5">{children}</ol>,
+                  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+                  strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+                  em: ({ children }) => <em className="italic">{children}</em>,
+                  a: ({ children, href }) => (
+                    <a className="font-medium text-primary underline underline-offset-2 hover:text-primary/80" href={href} rel="noreferrer" target="_blank">
+                      {children}
+                    </a>
+                  ),
+                  code: ({ children }) => (
+                    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">{children}</code>
+                  ),
+                  blockquote: ({ children }) => (
+                    <blockquote className="my-3 border-l-4 border-primary/30 pl-4 italic text-muted-foreground/80">{children}</blockquote>
+                  ),
+                  hr: () => <hr className="my-4 border-border" />,
+                  table: ({ children }) => (
+                    <div className="my-4 overflow-x-auto rounded-lg border border-border">
+                      <table className="w-full border-collapse text-sm">{children}</table>
+                    </div>
+                  ),
+                  thead: ({ children }) => <thead className="bg-muted/60 border-b border-border">{children}</thead>,
+                  tbody: ({ children }) => <tbody className="divide-y divide-border">{children}</tbody>,
+                  tr: ({ children }) => <tr className="transition-colors hover:bg-muted/30">{children}</tr>,
+                  th: ({ children }) => <th className="px-4 py-2.5 text-left font-semibold text-foreground">{children}</th>,
+                  td: ({ children }) => <td className="px-4 py-2.5 text-foreground/80">{children}</td>,
+                }}
+              >
+                {tool.description || tool.tagline || "No description available."}
+              </ReactMarkdown>
+            </div>
           </section>
 
           <Separator />
